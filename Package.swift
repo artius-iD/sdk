@@ -13,14 +13,14 @@ let package = Package(
     ],
     targets: [
         .binaryTarget(
-            name: "ArtiusIDSDK",
+            name: "artiusid_sdk_ios",
             url: "https://github.com/artiusID/sdk/releases/download/v1.0.13/ArtiusIDSDK.xcframework.zip",
             checksum: "ecb388dfc475a435e84a295cd2ad7716c42c119e5bf2c46ca62ba98b8505221a"
         ),
         .target(
             name: "ArtiusIDSDKWrapper",
             dependencies: [
-                "ArtiusIDSDK",
+                "artiusid_sdk_ios",
                 .product(name: "FirebaseCore", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseMessaging", package: "firebase-ios-sdk"),
                 .product(name: "OpenSSL", package: "OpenSSL")
