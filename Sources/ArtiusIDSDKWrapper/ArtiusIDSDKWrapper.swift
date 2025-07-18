@@ -3,7 +3,7 @@ import Foundation
 @_exported import ArtiusIDSDK
 
 public struct ArtiusIDSDKInfo {
-    public static let version = "1.0.9"
+    public static let version = "1.0.10"
     public static let build = "GitHub Distribution"
     
     public static func printInfo() {
