@@ -31,7 +31,7 @@ import OpenSSL
 
 /// SDK Information and utilities
 public struct ArtiusIDSDKInfo {
-    public static let version = "1.0.19"
+    public static let version = "1.0.20"
     public static let build = "Universal Binary (Device + Simulator)"
     public static let architecture = "Universal (arm64 + x86_64)"
     

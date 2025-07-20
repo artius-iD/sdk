@@ -6,7 +6,7 @@ Professional identity verification and document scanning SDK for iOS.
 
 ### Swift Package Manager
 ```swift
-.package(url: "https://github.com/artiusID/sdk.git", from: "1.0.19")
+.package(url: "https://github.com/artiusID/sdk.git", from: "1.0.20")
 ```
 
 ### Xcode
@@ -28,9 +28,9 @@ Professional identity verification and document scanning SDK for iOS.
 
 ## Binary Info
 
-- **Size:**  43M
-- **Checksum:** `1483003ae2206911c2a308ff7d7400a3d7038ad786da85313a4889422f973137`
-- **Version:** 1.0.19
+- **Size:**  42M
+- **Checksum:** `8c3dc28bdb1f0c20ac7303d599e69d8bf3618bb0aa73286c038099f21c6b8d3b`
+- **Version:** 1.0.20
 
 ## Support
 
