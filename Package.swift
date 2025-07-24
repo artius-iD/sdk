@@ -7,23 +7,17 @@ let package = Package(
     products: [
         .library(name: "ArtiusIDSDK", targets: ["ArtiusIDSDKWrapper"]),
     ],
-    dependencies: [
-        .package(url: "https://github.com/firebase/firebase-ios-sdk", from: "11.9.0"),
-        .package(url: "https://github.com/krzyzanowskim/OpenSSL.git", from: "3.3.2000")
-    ],
+    dependencies: [],
     targets: [
         .binaryTarget(
             name: "ArtiusIDSDK",
-            url: "https://github.com/artiusID/sdk/releases/download/v1.0.25/ArtiusIDSDK.xcframework.zip",
-            checksum: "8108b2aaeb3bf257e2940ecd34db722b939ebe9e69258b66589f6e9cbfe72ca0"
+            url: "https://github.com/artiusID/sdk/releases/download/v1.0.26/ArtiusIDSDK.xcframework.zip",
+            checksum: "a99bd8736e03cf1961dfa9e2be425d499bcd0da75f74e59252c8788e4ecf485d"
         ),
         .target(
             name: "ArtiusIDSDKWrapper",
             dependencies: [
-                "ArtiusIDSDK",
-                .product(name: "FirebaseCore", package: "firebase-ios-sdk"),
-                .product(name: "FirebaseMessaging", package: "firebase-ios-sdk"),
-                .product(name: "OpenSSL", package: "OpenSSL")
+                "ArtiusIDSDK"
             ],
             path: "Sources/ArtiusIDSDKWrapper"
         )
