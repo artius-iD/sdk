@@ -1,7 +1,11 @@
+
 // ArtiusIDSDKWrapper.swift
 // iOS-only wrapper for ArtiusID SDK binary framework
 // Optimized for iPhone and iPad devices
 // Created by Curtis Elswick on 07/07/2025
+//
+// This wrapper exposes only the public certificate management API to client apps via protocol-based access.
+// Use ArtiusIDSDKWrapper.shared.hasClientCertificate(), generateClientCertificate(), and removeClientCertificate() for certificate lifecycle.
 
 import Foundation
 import UIKit           // Direct import - iPhone and iPad only
@@ -18,6 +22,37 @@ import FirebaseMessaging
 #if canImport(OpenSSL)
 import OpenSSL
 #endif
+
+
+
+#if canImport(CertificateManager)
+import CertificateManager
+#endif
+
+
+// MARK: - CertificateManager Public API Protocol
+/// Protocol exposing only the public certificate management functions to client apps.
+public protocol CertificateManaging {
+    /// Returns true if a client certificate exists in secure storage.
+    func hasCertificate() -> Bool
+    /// Generates and stores a new client certificate if missing.
+    func generateCertificate()
+    /// Removes the client certificate from secure storage.
+    func removeCertificate() throws
+}
+
+/// Internal wrapper for CertificateManager, implementing only the public API.
+class CertificateManagerWrapper: CertificateManaging {
+    func hasCertificate() -> Bool {
+        return CertificateManager.shared.hasCertificate()
+    }
+    func generateCertificate() {
+        CertificateManager.shared.generateCertificate()
+    }
+    func removeCertificate() throws {
+        try CertificateManager.shared.removeCertificate()
+    }
+}
 
 @_exported import artiusid_sdk_ios
 
@@ -63,10 +98,17 @@ private class Keychain {
 }
 
 // Enhanced ArtiusID SDK Wrapper for iPhone and iPad
+
+/// Main entry point for ArtiusID SDK integration in client apps.
+///
+/// - Certificate management: Only public API exposed via protocol.
+/// - Firebase integration: Automatic if available in client app.
+/// - Keychain-based FCM token storage.
 public class ArtiusIDSDKWrapper {
     public static let shared = ArtiusIDSDKWrapper()
     private let keychain = Keychain()
     private var isFirebaseConfigured = false
+    private let certificateManager: CertificateManaging = CertificateManagerWrapper()
     private init() {}
 
     // MARK: - Core SDK Interface
@@ -89,10 +131,19 @@ public class ArtiusIDSDKWrapper {
         return keychain.get(forKey: "fcm_token")
     }
 
-    /// Check if client certificate exists
+    /// Returns true if a client certificate exists in secure storage.
     public func hasClientCertificate() -> Bool {
-        // Replace with actual SDK certificate check
-        return CertificateManager.shared.hasCertificate()
+        return certificateManager.hasCertificate()
+    }
+
+    /// Generates and stores a new client certificate if missing.
+    public func generateClientCertificate() {
+        certificateManager.generateCertificate()
+    }
+
+    /// Removes the client certificate from secure storage.
+    public func removeClientCertificate() throws {
+        try certificateManager.removeCertificate()
     }
 
     /// Get comprehensive SDK and integration information
@@ -160,9 +211,8 @@ public class ArtiusIDSDKWrapper {
 
     /// Ensure client certificate exists, generate if missing
     private func ensureClientCertificate() {
-        // Replace with actual SDK certificate generation/check logic
-        if !CertificateManager.shared.hasCertificate() {
-            CertificateManager.shared.generateCertificate()
+        if !hasClientCertificate() {
+            generateClientCertificate()
             print("[ArtiusIDSDKWrapper] Client certificate generated")
         } else {
             print("[ArtiusIDSDKWrapper] Client certificate already exists")
@@ -172,7 +222,7 @@ public class ArtiusIDSDKWrapper {
 
 // SDK Information and utilities
 public struct ArtiusIDSDKInfo {
-    public static let version = "1.0.26"
+    public static let version = "1.0.27"
     public static let build = "iOS Universal Binary (Device + Simulator)"
     public static let architecture = "iOS (arm64 + x86_64)"
     public static func printInfo() {
