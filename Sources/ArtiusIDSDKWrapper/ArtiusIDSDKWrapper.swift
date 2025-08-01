@@ -15,10 +15,6 @@ import FirebaseCore
 import FirebaseMessaging
 #endif
 
-#if canImport(OpenSSL)
-import OpenSSL
-#endif
-
 // Re-export all public types from the binary framework
 @_exported import artiusid_sdk_ios
 
@@ -197,7 +193,7 @@ public class ArtiusIDSDKWrapper {
 
 // SDK Information and utilities
 public struct ArtiusIDSDKInfo {
-    public static let version = "1.0.38"
+    public static let version = "1.0.39"
     public static let wrapperVersion = "1.0.21"
     public static let build = "iOS Universal Binary (Device + Simulator)"
     public static let architecture = "iOS (arm64 + x86_64)"
