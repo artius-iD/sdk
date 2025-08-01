@@ -107,7 +107,7 @@ public class ArtiusIDSDKWrapper {
     // MARK: - Core SDK Interface
 
     /// Configure SDK with automatic dependency initialization
-    public func configure(environment: public Environments? = nil, logLevel: public LogLevel = .info) {
+    public func configure(environment: Environments? = nil, logLevel: LogLevel = .info) {
         // Initialize dependencies first
         ArtiusIDSDKDependencies.initialize()
         guard ArtiusIDSDKDependencies.verifyDependencies() else {
@@ -197,7 +197,7 @@ public class ArtiusIDSDKWrapper {
 
 // SDK Information and utilities
 public struct ArtiusIDSDKInfo {
-    public static let version = "1.0.34"
+    public static let version = "1.0.35"
     public static let wrapperVersion = "1.0.21"
     public static let build = "iOS Universal Binary (Device + Simulator)"
     public static let architecture = "iOS (arm64 + x86_64)"
@@ -211,7 +211,7 @@ public struct ArtiusIDSDKInfo {
 // MARK: - Public Convenience API
 public typealias ArtiusID = ArtiusIDSDKWrapper
 
-public func configureArtiusIDSDK(environment: public Environments? = nil, logLevel: public LogLevel = .info) {
+public func configureArtiusIDSDK(environment: Environments? = nil, logLevel: LogLevel = .info) {
     ArtiusIDSDKWrapper.shared.configure(environment: environment, logLevel: logLevel)
 }
 
