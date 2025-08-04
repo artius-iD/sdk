@@ -11,8 +11,8 @@ let package = Package(
     targets: [
         .binaryTarget(
             name: "ArtiusIDSDK",
-            url: "https://github.com/artiusID/sdk/releases/download/v1.0.43/ArtiusIDSDK.xcframework.zip",
-            checksum: "4af755c6bc4df9c78defbaa4d494073c56cbddaf0dba16b3d3d3b7c76696bedf"
+            url: "https://github.com/artiusID/sdk/releases/download/v1.0.44/ArtiusIDSDK.xcframework.zip",
+            checksum: "fb9fe37047c005ccdac3830b0cac0a0c4d4aee743392fa42f663e2a181c70090"
         ),
         .target(
             name: "ArtiusIDSDKWrapper",
