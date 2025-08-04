@@ -3,23 +3,25 @@ import PackageDescription
 
 let package = Package(
     name: "ArtiusIDSDK",
-    platforms: [.iOS(.v13)],
-    products: [
-        .library(name: "ArtiusIDSDK", targets: ["ArtiusIDSDKWrapper"]),
+    defaultLocalization: "en",
+    platforms: [
+        .iOS(.v13)
     ],
-    dependencies: [],
+    products: [
+        .library(
+            name: "ArtiusIDSDK",
+            targets: ["ArtiusIDSDK"]
+        ),
+    ],
+    dependencies: [
+        // ✅ OpenSSL integrated via SwiftPM - no consumer setup required
+        .package(url: "https://github.com/krzyzanowskim/OpenSSL.git", from: "3.3.3001")
+    ],
     targets: [
         .binaryTarget(
             name: "ArtiusIDSDK",
-            url: "https://github.com/artiusID/sdk/releases/download/v1.0.40/ArtiusIDSDK.xcframework.zip",
-            checksum: "411524e3a71829818386cc1a19e16bbaa48689014d7a33229db25f9636d829ef"
-        ),
-        .target(
-            name: "ArtiusIDSDKWrapper",
-            dependencies: [
-                "ArtiusIDSDK"
-            ],
-            path: "Sources/ArtiusIDSDKWrapper"
+            url: "https://github.com/artiusID/sdk/releases/download/v1.0.41/ArtiusIDSDK.xcframework.zip",
+            checksum: "0dfd039de2de3433e5542c6735f7c3d092f244c0d9fae913fcbafb306281ba85"
         )
     ]
 )
