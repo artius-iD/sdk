@@ -5,6 +5,10 @@
 import Foundation
 import UIKit
 
+#if canImport(SwiftUI)
+import SwiftUI
+#endif
+
 /// Resource bundle helper for accessing SDK assets
 public class SDKResourceBundle {
     public static let shared = SDKResourceBundle()
@@ -104,6 +108,7 @@ public class SDKResourceBundle {
 }
 
 /// SwiftUI Image extension for SDK resources
+#if canImport(SwiftUI)
 extension Image {
     /// Initialize Image from SDK resource bundle
     public static func sdkImage(named name: String) -> Image {
@@ -115,6 +120,7 @@ extension Image {
         }
     }
 }
+#endif
 
 /// String extension for SDK localization
 extension String {
