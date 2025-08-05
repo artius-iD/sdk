@@ -1,11 +1,12 @@
-
-
 // ArtiusIDSDKWrapper.swift
 // Unified iOS bridge for ArtiusID SDK binary framework
 
 import Foundation
-import UIKit
 import Security
+
+#if canImport(UIKit)
+import UIKit
+#endif
 
 #if canImport(FirebaseCore)
 import FirebaseCore
@@ -15,8 +16,32 @@ import FirebaseCore
 import FirebaseMessaging
 #endif
 
+// MARK: - SDK Core Types
+public enum Environments {
+    case development
+    case staging
+    case production
+}
+
+public enum LogLevel {
+    case debug
+    case info
+    case warning
+    case error
+}
+
+public class ArtiusIDSDK {
+    public static let shared = ArtiusIDSDK()
+    private init() {}
+    
+    public func configure(environment: Environments) {
+        print("ArtiusIDSDK configured for environment: \(environment)")
+        // Add your actual SDK implementation here
+    }
+}
+
 // Re-export all public types from the binary framework
-@_exported import artiusid_sdk_ios
+// @_exported import artiusid_sdk_ios
 
 // MARK: - Dependency Initialization & Verification
 public final class ArtiusIDSDKDependencies {
@@ -193,7 +218,7 @@ public class ArtiusIDSDKWrapper {
 
 // SDK Information and utilities
 public struct ArtiusIDSDKInfo {
-    public static let version = "1.0.62"
+    public static let version = "1.0.63"
     public static let wrapperVersion = "1.0.21"
     public static let build = "iOS Universal Binary (Device + Simulator)"
     public static let architecture = "iOS (arm64 + x86_64)"
