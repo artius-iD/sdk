@@ -16,7 +16,7 @@ import FirebaseMessaging
 #endif
 
 // Re-export all public types from the binary framework
-@_exported import ArtiusIDiOSSDK
+@_exported import artiusid_sdk_ios
 
 // MARK: - Dependency Initialization & Verification
 public final class ArtiusIDSDKDependencies {
@@ -193,7 +193,7 @@ public class ArtiusIDSDKWrapper {
 
 // SDK Information and utilities
 public struct ArtiusIDSDKInfo {
-    public static let version = "1.0.59"
+    public static let version = "1.0.60"
     public static let wrapperVersion = "1.0.21"
     public static let build = "iOS Universal Binary (Device + Simulator)"
     public static let architecture = "iOS (arm64 + x86_64)"
