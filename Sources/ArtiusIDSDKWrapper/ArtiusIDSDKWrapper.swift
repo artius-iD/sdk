@@ -218,7 +218,7 @@ public class ArtiusIDSDKWrapper {
 
 // SDK Information and utilities
 public struct ArtiusIDSDKInfo {
-    public static let version = "1.0.69"
+    public static let version = "1.0.70"
     public static let wrapperVersion = "1.0.21"
     public static let build = "iOS Universal Binary (Device + Simulator)"
     public static let architecture = "iOS (arm64 + x86_64)"
