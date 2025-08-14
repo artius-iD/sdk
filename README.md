@@ -1,95 +1,69 @@
 # ArtiusID iOS SDK
 
-**Professional identity verification and document scanning SDK for iOS applications.**
-
-## Installation
-
-### Swift Package Manager
-
-Add the following dependency to your `Package.swift`:
-
-```swift
-dependencies: [
-    .package(url: "https://github.com/artiusID/sdk.git", from: "1.0.0")
-]
-```
-
-### Xcode Integration
-
-1. File → Add Package Dependencies
-2. Enter URL: `https://github.com/artiusID/sdk.git`
-3. Select the latest version or specify a minimum version
-
-## Platform Requirements
-
-### Runtime Target
-- **iPhone and iPad devices exclusively** 📱
-- **iOS 13.0+** minimum deployment target
-- **Production use**: iPhone and iPad only
-
-### Development Requirements
-- **macOS 10.15+** required for build compatibility
-- **Xcode 12.0+** recommended
-- **Swift 5.3+** supported
-
-## Why macOS in Package.swift?
-
-The Package.swift declares macOS 10.15+ support **solely for development build compatibility**:
-
-```swift
-platforms: [
-    .iOS(.v13),      // ✅ Runtime target: iPhone & iPad
-    .macOS(.v10_15)  // 🛠️ Build-only: Required by OpenSSL dependency
-]
-```
-
-### Technical Explanation
-
-1. **XCFramework Dependency**: ArtiusID SDK was built with OpenSSL integration
-2. **OpenSSL Package**: krzyzanowskim/OpenSSL requires macOS 10.15+ for Swift Package Manager
-3. **Build Compatibility**: macOS platform enables successful dependency resolution
-4. **Runtime Reality**: Code uses UIKit directly - iPhone/iPad execution only
-
-## Integration
-
-Your client app should target iPhone and iPad exclusively:
-
-```swift
-// Your client app's Package.swift or project settings
-platforms: [.iOS(.v13)]  // iPhone & iPad only
-```
-
-The SDK's macOS declaration won't affect your app's deployment targets.
-
-## Dependencies
-
-- **OpenSSL 3.3.2000+**: Required by XCFramework binary for cryptographic operations
-- **Firebase iOS SDK 11.9.0+**: Optional, conditionally imported when available
-  - FirebaseCore: Automatic configuration detection
-  - FirebaseMessaging: Push notification support
+A professional identity verification and document scanning SDK for iOS applications.  
+This SDK provides a Swift wrapper (`ArtiusIDSDKWrapper`) for a binary framework, with optional Firebase integration and secure FCM token management.
 
 ## Features
 
-- 📱 **Document Scanning**: Passport, driver's license, and ID verification
-- 🔐 **Biometric Authentication**: Face ID and Touch ID integration  
-- 🎯 **Identity Verification**: Real-time document validation with ML models
-- 🔥 **Firebase Integration**: Optional push notifications and analytics
-- 📐 **SwiftUI & UIKit**: Native iOS component support
-- 🌐 **Network Security**: OpenSSL-powered secure communications
+- Document verification and authentication
+- Face mesh analysis and biometric verification
+- Certificate-based security
+- Client-controlled Firebase integration for notifications
+- SwiftUI and UIKit support
+- Secure FCM token storage via Keychain
+- Universal binary (device + simulator)
+
+## Requirements
+
+- iOS 13.0+
+- Xcode 12.0+
+- Swift 5.3+
+- macOS 10.15+ (for build compatibility with OpenSSL)
+
+## Installation
+
+### Swift Package Manager (Recommended)
+
+Add the following to your `Package.swift`:
+
+```swift
+dependencies: [
+    .package(url: "https://github.com/artiusID/sdk.git", from: "1.0.16")
+]
+```
+
+Or add it through Xcode:
+1. File → Add Package Dependencies
+2. Enter the repository URL: `https://github.com/artiusID/sdk.git`
+3. Select version and add to your target
+
+### Manual Installation
+
+1. Download the latest `artiusid_sdk_ios.xcframework.zip` from [GitHub Releases](https://github.com/artiusID/sdk/releases)
+2. Extract and drag `artiusid_sdk_ios.xcframework` into your Xcode project
+3. Add Firebase dependencies to your project (FirebaseCore, FirebaseMessaging) if you want push notifications
+4. OpenSSL is included automatically
 
 ## Usage
+
+### Import the SDK
+
+In your client Swift files, import the library:
+
+```swift
+import artiusid_sdk_ios
+```
+
+This exposes the `ArtiusIDSDKWrapper` API.
 
 ### Basic Setup
 
 ```swift
-import ArtiusIDSDK
+import artiusid_sdk_ios
 
-// Configure the SDK (typically in AppDelegate)
 func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-    
     // Initialize ArtiusID SDK
-    ArtiusIDSDKWrapper.shared.configure()
-    
+    ArtiusIDSDKWrapper.shared.configure(environment: .production)
     return true
 }
 ```
@@ -97,28 +71,19 @@ func application(_ application: UIApplication, didFinishLaunchingWithOptions lau
 ### With Firebase Integration
 
 ```swift
-import ArtiusIDSDK
+import artiusid_sdk_ios
 import FirebaseCore
 import FirebaseMessaging
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
-    
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        
-        // Configure Firebase first
         FirebaseApp.configure()
-        
-        // Initialize ArtiusID SDK (will detect Firebase automatically)
-        ArtiusIDSDKWrapper.shared.configure()
-        
-        // Set up Firebase Messaging
+        ArtiusIDSDKWrapper.shared.configure(environment: .production)
         Messaging.messaging().delegate = self
-        
         return true
     }
-    
-    // Handle FCM token updates
+
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
         if let token = fcmToken {
             ArtiusIDSDKWrapper.shared.updateFCMToken(token)
@@ -127,42 +92,96 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
 }
 ```
 
-### SDK Information
+### FCM Token Management
 
 ```swift
-// Get SDK version and info
+// Update FCM token
+ArtiusIDSDKWrapper.shared.updateFCMToken(token)
+
+// Get current FCM token
+let token = ArtiusIDSDKWrapper.shared.getCurrentFCMToken()
+
+// Check if SDK is ready for verification
+if ArtiusIDSDKWrapper.shared.isReadyForVerification() {
+    // Ready to use SDK features
+}
+```
+
+### Get SDK Info
+
+```swift
 let info = ArtiusIDSDKWrapper.shared.getSDKInfo()
 print("SDK Version: \(info["sdkVersion"] ?? "Unknown")")
 print("Platform: \(info["platform"] ?? "Unknown")")
 
-// Print detailed info
 printArtiusIDSDKInfo()
 ```
 
-## Version Information
+## API Reference
 
-To get the current SDK version and release information:
+### Core Types
 
-- **In Code**: Use `artiusIDSDKVersion()` function or `ArtiusIDSDKInfo.version`
-- **GitHub Releases**: Check [releases page](https://github.com/artiusID/sdk/releases) for latest version
-- **Package.swift**: Binary target URL contains the version number
-- **Build Info**: Use `ArtiusIDSDKInfo.printInfo()` for complete build details
+```swift
+public enum Environments {
+    case development
+    case staging
+    case production
+}
 
-## Binary Information
+public enum LogLevel {
+    case debug
+    case info
+    case warning
+    case error
+}
+```
 
-- **Framework Size**: ~43MB (30MB device slice, 38MB simulator slice)
-- **Production Size**: ~30MB (device-only deployment)
-- **ML Model Size**: 639KB (ICAO document verification)
-- **Asset Size**: ~22MB (UI components and animations)
-- **Checksum**: Available in Package.swift and GitHub releases
+### Main Wrapper
 
-## Support & Resources
+```swift
+public class ArtiusIDSDKWrapper {
+    public static let shared: ArtiusIDSDKWrapper
+    public func configure(environment: Environments? = nil, logLevel: LogLevel = .info)
+    public func updateFCMToken(_ token: String)
+    public func getCurrentFCMToken() -> String?
+    public func getSDKInfo() -> [String: Any]
+    public func isReadyForVerification() -> Bool
+}
+```
 
-- **GitHub Repository**: [https://github.com/artiusID/sdk](https://github.com/artiusID/sdk)
-- **Issues & Bug Reports**: [GitHub Issues](https://github.com/artiusID/sdk/issues)
-- **Latest Release**: [GitHub Releases](https://github.com/artiusID/sdk/releases)
-- **Documentation**: This README and inline code documentation
+### Convenience API
 
----
+```swift
+public typealias ArtiusID = ArtiusIDSDKWrapper
 
-**Summary**: This SDK runs exclusively on iPhone and iPad devices. The macOS platform requirement in Package.swift exists purely for build system compatibility with the OpenSSL dependency.
+public func configureArtiusIDSDK(environment: Environments? = nil, logLevel: LogLevel = .info)
+public func artiusIDSDKVersion() -> String
+public func printArtiusIDSDKInfo()
+```
+
+## Firebase Integration
+
+- The SDK will auto-detect Firebase if present.
+- You must configure Firebase in your app if you want push notifications.
+- Pass FCM tokens to the SDK using `updateFCMToken`.
+
+## Troubleshooting
+
+- Ensure all dependencies (Firebase, OpenSSL) are properly added.
+- Verify Firebase is configured before SDK initialization if using notifications.
+- Clean build artifacts if you see SwiftPM errors:
+  ```bash
+  rm -rf .build
+  pkill swift
+  pkill SwiftPM
+  ```
+
+## Support
+
+- Email: support@artiusid.com
+- Documentation: [docs.artiusid.com](https://docs.artiusid.com)
+- Issues: [GitHub Issues](https://github.com/artiusID/sdk/issues)
+
+## License
+
+This SDK is proprietary software. See the license agreement for terms of use.
