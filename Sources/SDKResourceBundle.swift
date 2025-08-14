@@ -14,6 +14,7 @@ public class SDKResourceBundle {
     public static let shared = SDKResourceBundle()
     
     private var _bundle: Bundle?
+    public static let version = "1.0.96" 
     
     private init() {}
     
