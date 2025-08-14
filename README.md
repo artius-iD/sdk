@@ -3,6 +3,33 @@
 A professional identity verification and document scanning SDK for iOS applications.  
 This SDK provides a Swift wrapper (`ArtiusIDSDKWrapper`) for a binary framework, with optional Firebase integration and secure FCM token management.
 
+## Project Structure
+
+```
+.
+├── Sources/                    # Public SDK interface
+│   ├── ArtiusIDSDKWrapper.swift    # Main SDK wrapper
+│   └── SDKResourceBundle.swift     # Resource management
+├── Constants/                 # SDK constants (internal)
+├── Enums/                    # Enumerations (internal)
+├── Extensions/               # Swift extensions (internal)
+├── Helper/                  # Helper utilities (internal)
+├── Models/                  # Data models (internal)
+├── Services/                # Service layer (internal)
+├── Utilities/               # Utility functions (internal)
+├── Views/                   # UI components (internal)
+├── Tests/                    # Test suite
+│   ├── ArtiusIDSDKTests/    # Unit tests
+│   └── ArtiusIDSDKUITests/  # UI tests
+├── Resources/               # Project resources
+├── scripts/                # Build and deployment scripts
+│   ├── build-framework.sh  # Build universal binary framework
+│   ├── cleanup-repository.sh # Clean temporary files
+│   ├── publish-github.sh   # Publish SDK release
+│   └── publish-only.sh     # Update existing release
+└── Package.swift           # Swift package manifest
+```
+
 ## Features
 
 - Document verification and authentication
@@ -171,9 +198,7 @@ public func printArtiusIDSDKInfo()
 - Verify Firebase is configured before SDK initialization if using notifications.
 - Clean build artifacts if you see SwiftPM errors:
   ```bash
-  rm -rf .build
-  pkill swift
-  pkill SwiftPM
+  ./scripts/cleanup-repository.sh
   ```
 
 ## Support
