@@ -4,10 +4,12 @@ import PackageDescription
 let package = Package(
     name: "artiusid_sdk_ios",
     platforms: [.iOS(.v13)],
-.products: [
-    .library(name: "artiusid_sdk_ios", targets: ["ArtiusIDSDKWrapper"]),
-    .library(name: "ArtiusIDSDKWrapper", targets: ["ArtiusIDSDKWrapper"]),
-],
+    products: [
+        .library(
+            name: "ArtiusIDSDK",
+            targets: ["ArtiusIDSDKWrapper"]
+        )
+    ],
     dependencies: [],
     targets: [
         .binaryTarget(
