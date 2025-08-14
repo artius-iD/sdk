@@ -138,7 +138,7 @@ if ArtiusIDSDKWrapper.shared.isReadyForVerification() {
 
 ```swift
 let info = ArtiusIDSDKWrapper.shared.getSDKInfo()
-print("SDK Version: \(info["sdkVersion"] ?? "Unknown")")
+print("SDK Version: 1.0.91
 print("Platform: \(info["platform"] ?? "Unknown")")
 
 printArtiusIDSDKInfo()
