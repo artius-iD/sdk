@@ -169,11 +169,7 @@ public class ArtiusIDSDKWrapper {
         #else
         print("[ArtiusIDSDKWrapper] Firebase not available - operating in standalone mode")
         #endif
-
-        // Initialize client certificate silently
-        Task {
-            try? await CertificateManager.shared.checkAndGenerateCertificate()
-        }
+        // Certificate logic is now handled internally by the binary SDK
     }
 
     /// Setup FCM token refresh handling
