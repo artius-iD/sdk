@@ -3,19 +3,14 @@
 
 import Foundation
 import Security
-
-#if canImport(FirebaseCore)
 import FirebaseCore
-#endif
-
-#if canImport(FirebaseMessaging)
 import FirebaseMessaging
-#endif
 
-// Re-export all public types from the binary framework
+// If available, import LogManager global functions
 #if canImport(artiusid_sdk_ios)
 @_exported import artiusid_sdk_ios
 #endif
+import ArtiusIDSDKWrapper
 
 // Provide backward compatibility with ArtiusIDSDK name
 public typealias ArtiusIDSDK = ArtiusIDSDKWrapper
@@ -31,24 +26,24 @@ public final class ArtiusIDSDKDependencies {
         #if canImport(FirebaseMessaging)
         _ = Messaging.self
         #endif
-        logDebug("ArtiusID SDK dependencies initialized successfully", source: "ArtiusIDSDKWrapper")
+        print("ArtiusID SDK dependencies initialized successfully")
     }
 
     /// Verify that all required dependencies are available
     public static func verifyDependencies() -> Bool {
         #if canImport(FirebaseCore)
         guard NSClassFromString("FIRApp") != nil else {
-            logDebug("❌ Firebase not available", source: "ArtiusIDSDKWrapper")
+            print("❌ Firebase not available")
             return false
         }
         #endif
         #if canImport(FirebaseMessaging)
         guard NSClassFromString("FIRMessaging") != nil else {
-            logDebug("❌ Firebase Messaging not available", source: "ArtiusIDSDKWrapper")
+            print("❌ Firebase Messaging not available")
             return false
         }
         #endif
-        logDebug("✅ All ArtiusID SDK dependencies verified", source: "ArtiusIDSDKWrapper")
+        print("✅ All ArtiusID SDK dependencies verified")
         return true
     }
 }
@@ -111,20 +106,20 @@ public class ArtiusIDSDKWrapper {
             fatalError("ArtiusID SDK dependencies not properly configured")
         }
         configureFirebaseIfAvailable()
-        logDebug("[ArtiusIDSDKWrapper] configure called with environment: \(String(describing: environment)), logLevel: \(logLevel)", source: "ArtiusIDSDKWrapper")
+        print("[ArtiusIDSDKWrapper] configure called with environment: \(String(describing: environment)), logLevel: \(logLevel)")
         // If environment is provided, configure the binary SDK
         if let env = environment {
-            logDebug("[ArtiusIDSDKWrapper] Calling ArtiusIDSDK.shared.configure with environment: \(env)", source: "ArtiusIDSDKWrapper")
+            print("[ArtiusIDSDKWrapper] Calling ArtiusIDSDK.shared.configure with environment: \(env)")
             ArtiusIDSDK.shared.configure(environment: env)
         }
-        logDebug("[ArtiusIDSDKWrapper] initialized for iPhone and iPad", source: "ArtiusIDSDKWrapper")
+        print("[ArtiusIDSDKWrapper] initialized for iPhone and iPad")
     }
 
     /// Update FCM token securely in keychain
     public func updateFCMToken(_ token: String) {
     _ = keychain.set(token, forKey: "fcm_token")
     ArtiusIDSDK.shared.updateFCMToken(token)
-    logDebug("[ArtiusIDSDKWrapper] FCM token updated securely and passed to SDK", source: "ArtiusIDSDKWrapper")
+    print("[ArtiusIDSDKWrapper] FCM token updated securely and passed to SDK")
     }
 
     /// Get current FCM token from secure storage
@@ -163,12 +158,12 @@ public class ArtiusIDSDKWrapper {
         if FirebaseApp.app() != nil {
             isFirebaseConfigured = true
             setupFCMTokenHandling()
-            logDebug("[ArtiusIDSDKWrapper] Firebase integration enabled", source: "ArtiusIDSDKWrapper")
+            print("[ArtiusIDSDKWrapper] Firebase integration enabled")
         } else {
-            logDebug("[ArtiusIDSDKWrapper] Firebase available but not configured by client app", source: "ArtiusIDSDKWrapper")
+            print("[ArtiusIDSDKWrapper] Firebase available but not configured by client app")
         }
         #else
-        logDebug("[ArtiusIDSDKWrapper] Firebase not available - operating in standalone mode", source: "ArtiusIDSDKWrapper")
+        print("[ArtiusIDSDKWrapper] Firebase not available - operating in standalone mode")
         #endif
         // Certificate logic is now handled internally by the binary SDK
     }
@@ -203,9 +198,9 @@ public struct ArtiusIDSDKInfo {
     public static let build = "iOS Universal Binary (Device + Simulator)"
     public static let architecture = "iOS (arm64 + x86_64)"
     public static func printInfo() {
-        logDebug("ArtiusID SDK v\(version) (\(build)) - \(architecture)", source: "ArtiusIDSDKWrapper")
-        logDebug("Wrapper: iPhone and iPad optimized with Firebase integration", source: "ArtiusIDSDKWrapper")
-        logDebug("Production size: ~30MB (device slice only)", source: "ArtiusIDSDKWrapper")
+        print("ArtiusID SDK v\(version) (\(build)) - \(architecture)")
+        print("Wrapper: iPhone and iPad optimized with Firebase integration")
+        print("Production size: ~30MB (device slice only)")
     }
 }
 
