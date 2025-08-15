@@ -15,7 +15,9 @@ import FirebaseMessaging
 #endif
 
 // Re-export all public types from the binary framework
+#if canImport(artiusid_sdk_ios)
 @_exported import artiusid_sdk_ios
+#endif
 
 // Provide backward compatibility with ArtiusIDSDK name
 public typealias ArtiusIDSDK = ArtiusIDSDKWrapper
