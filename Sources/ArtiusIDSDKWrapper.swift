@@ -1,5 +1,3 @@
-
-
 // ArtiusIDSDKWrapper.swift
 // Unified iOS bridge for ArtiusID SDK binary framework
 
@@ -114,18 +112,12 @@ public class ArtiusIDSDKWrapper {
             fatalError("ArtiusID SDK dependencies not properly configured")
         }
         configureFirebaseIfAvailable()
+        print("[ArtiusIDSDKWrapper] configure called with environment: \(String(describing: environment)), logLevel: \(logLevel)")
         // If environment is provided, configure the binary SDK
         if let env = environment {
+            print("[ArtiusIDSDKWrapper] Calling ArtiusIDSDK.shared.configure with environment: \(env)")
             ArtiusIDSDK.shared.configure(environment: env)
         }
-            // Ensure client certificate is present
-            Task {
-                do {
-                    print("[ArtiusIDSDKWrapper] Client certificate checked/generated")
-                } catch {
-                    print("[ArtiusIDSDKWrapper] Failed to generate client certificate: \(error)")
-                }
-            }
         print("[ArtiusIDSDKWrapper] initialized for iPhone and iPad")
     }
 
