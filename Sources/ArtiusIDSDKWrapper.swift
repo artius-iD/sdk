@@ -4,7 +4,6 @@
 // Unified iOS bridge for ArtiusID SDK binary framework
 
 import Foundation
-import UIKit
 import Security
 
 #if canImport(FirebaseCore)
