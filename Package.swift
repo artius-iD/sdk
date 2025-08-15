@@ -28,7 +28,7 @@ let package = Package(
                 "artiusid_sdk_ios",
                 "OpenSSL"
             ],
-            path: "Sources/ArtiusIDSDKWrapper"
+            path: "Sources"
         )
     ]
 )
