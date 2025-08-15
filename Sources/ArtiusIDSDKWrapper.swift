@@ -3,8 +3,6 @@
 
 import Foundation
 import Security
-//import FirebaseCore
-//import FirebaseMessaging
 
 // If available, import LogManager global functions
 #if canImport(artiusid_sdk_ios)
