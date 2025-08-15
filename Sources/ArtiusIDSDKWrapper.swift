@@ -122,8 +122,9 @@ public class ArtiusIDSDKWrapper {
 
     /// Update FCM token securely in keychain
     public func updateFCMToken(_ token: String) {
-        _ = keychain.set(token, forKey: "fcm_token")
-        print("[ArtiusIDSDKWrapper] FCM token updated securely")
+    _ = keychain.set(token, forKey: "fcm_token")
+    ArtiusIDSDK.shared.updateFCMToken(token)
+    print("[ArtiusIDSDKWrapper] FCM token updated securely and passed to SDK")
     }
 
     /// Get current FCM token from secure storage
