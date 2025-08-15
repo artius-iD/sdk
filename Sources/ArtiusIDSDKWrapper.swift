@@ -118,6 +118,15 @@ public class ArtiusIDSDKWrapper {
         if let env = environment {
             ArtiusIDSDK.shared.configure(environment: env)
         }
+            // Ensure client certificate is present
+            Task {
+                do {
+                    try await CertificateManager.shared.checkAndGenerateCertificate()
+                    print("[ArtiusIDSDKWrapper] Client certificate checked/generated")
+                } catch {
+                    print("[ArtiusIDSDKWrapper] Failed to generate client certificate: \(error)")
+                }
+            }
         print("[ArtiusIDSDKWrapper] initialized for iPhone and iPad")
     }
 
