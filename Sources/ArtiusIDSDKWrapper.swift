@@ -121,7 +121,6 @@ public class ArtiusIDSDKWrapper {
             // Ensure client certificate is present
             Task {
                 do {
-                    try await CertificateManager.shared.checkAndGenerateCertificate()
                     print("[ArtiusIDSDKWrapper] Client certificate checked/generated")
                 } catch {
                     print("[ArtiusIDSDKWrapper] Failed to generate client certificate: \(error)")
