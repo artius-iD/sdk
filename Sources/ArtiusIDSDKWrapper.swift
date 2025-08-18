@@ -8,10 +8,9 @@ import Security
 #if canImport(artiusid_sdk_ios)
 @_exported import artiusid_sdk_ios
 #endif
-import ArtiusIDSDKWrapper
 
 // Provide backward compatibility with ArtiusIDSDK name
-public typealias ArtiusIDSDK = ArtiusIDSDKWrapper
+//public typealias ArtiusIDSDK = ArtiusIDSDKWrapper
 
 // MARK: - Dependency Initialization & Verification
 public final class ArtiusIDSDKDependencies {
