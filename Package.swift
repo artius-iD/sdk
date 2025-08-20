@@ -14,9 +14,9 @@ let package = Package(
     targets: [
         .binaryTarget(
             name: "OpenSSL",
-            url: "https://github.com/artiusID/sdk/releases/download/v1.0.93/OpenSSL.xcframework.zip",
-            checksum: "27fcb236315bb348217518ac8ce68b84362a30a1bb52a796d50f997b9d945443"
-        ),
+            url: "https://github.com/artiusID/sdk/releases/download/v1.0.120/artiusid_sdk_ios.xcframework.zip",
+            checksum: "1eba113956a5dd06bfa196dc860fc3a269d09b2e9fdfe1f109717c031a469bd6"
+         ),
         .binaryTarget(
             name: "artiusid_sdk_ios",
             url: "https://github.com/artiusID/sdk/releases/download/v1.0.93/artiusid_sdk_ios.xcframework.zip",
