@@ -45,8 +45,8 @@ public final class ArtiusIDSDKDependencies {
     }
 }
 
-// Simple Keychain wrapper for FCM token storage
-private class Keychain {
+// Simple Keychain wrapper for FCM token storag
+class Keychain {
     private let service: String
     init(service: String = "com.artiusid.sdk") { self.service = service }
     func set(_ value: String, forKey key: String) -> Bool {
