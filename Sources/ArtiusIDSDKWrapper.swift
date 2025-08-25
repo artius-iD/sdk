@@ -48,8 +48,8 @@ public final class ArtiusIDSDKDependencies {
 // Simple Keychain wrapper for FCM token storag
 public class Keychain {
     private let service: String
-    init(service: String = "com.artiusid.sdk") { self.service = service }
-    func set(_ value: String, forKey key: String) -> Bool {
+    public init(service: String = "com.artiusid.sdk") { self.service = service }
+    public func set(_ value: String, forKey key: String) -> Bool {
         let data = value.data(using: .utf8)!
         let query = [
             kSecClass as String: kSecClassGenericPassword as String,
@@ -60,7 +60,7 @@ public class Keychain {
         SecItemDelete(query as CFDictionary)
         return SecItemAdd(query as CFDictionary, nil) == errSecSuccess
     }
-    func get(forKey key: String) -> String? {
+    public func get(forKey key: String) -> String? {
         let query = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -76,7 +76,7 @@ public class Keychain {
             return nil
         }
     }
-    func delete(forKey key: String) -> Bool {
+    public func delete(forKey key: String) -> Bool {
         let query = [
             kSecClass as String: kSecClassGenericPassword as String,
             kSecAttrService as String: service,
