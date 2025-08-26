@@ -48,7 +48,7 @@ public final class ArtiusIDSDKDependencies {
 // Simple Keychain wrapper for FCM token storag
 public class Keychain {
     private let service: String
-    public init(service: String = "com.artiusid.sdk") { self.service = service }
+    public init(service: String = "artiusid.dev") { self.service = service }
     public func set(_ value: String, forKey key: String) -> Bool {
         let data = value.data(using: .utf8)!
         let query = [
@@ -114,14 +114,14 @@ public class ArtiusIDSDKWrapper {
 
     /// Update FCM token securely in keychain
     public func updateFCMToken(_ token: String) {
-    _ = keychain.set(token, forKey: "fcm_token")
+    _ = keychain.set(token, forKey: "fcmToken")
     ArtiusIDSDK.shared.updateFCMToken(token)
     print("[ArtiusIDSDKWrapper] FCM token updated securely and passed to SDK")
     }
 
     /// Get current FCM token from secure storage
     public func getCurrentFCMToken() -> String? {
-        return keychain.get(forKey: "fcm_token")
+    return keychain.get(forKey: "fcmToken")
     }
 
     /// Get comprehensive SDK and integration information
@@ -138,13 +138,13 @@ public class ArtiusIDSDKWrapper {
         info["firebaseAvailable"] = false
         info["firebaseConfigured"] = false
         #endif
-        info["fcmTokenAvailable"] = getCurrentFCMToken() != nil
+    info["fcmTokenAvailable"] = getCurrentFCMToken() != nil
         return info
     }
 
     /// Check if SDK is ready for verification (FCM token available)
     public func isReadyForVerification() -> Bool {
-        return getCurrentFCMToken() != nil
+    return getCurrentFCMToken() != nil
     }
 
     // MARK: - Private Implementation
