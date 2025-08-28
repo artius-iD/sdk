@@ -7,7 +7,7 @@ import Security
 
 // TBD, import LogManager global functions
 #if canImport(artiusid_sdk_ios)
-// Removed invalid import of self module
+import artiusid_sdk_ios
 #endif
 
 // Provide backward compatibility with ArtiusIDSDK name
