@@ -5,7 +5,6 @@
 import Foundation
 import Security
 
-// TBD, import LogManager global functions
 #if canImport(artiusid_sdk_ios)
 import artiusid_sdk_ios
 #endif
@@ -104,7 +103,7 @@ public class ArtiusIDSDKWrapper {
             fatalError("ArtiusID SDK dependencies not properly configured")
         }
         configureFirebaseIfAvailable()
-        LogManager.logLevel = logLevel
+        LogManager.setLogLevel(logLevel)
         print("[ArtiusIDSDKWrapper] configure called with environment: \(String(describing: environment)), logLevel: \(logLevel)")
         // If environment is provided, configure the binary SDK
         if let env = environment {
