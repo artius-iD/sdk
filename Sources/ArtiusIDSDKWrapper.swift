@@ -1,3 +1,4 @@
+
 // ArtiusIDSDKWrapper.swift
 // Unified iOS bridge for ArtiusID SDK binary framework
 
@@ -6,7 +7,7 @@ import Security
 
 // TBD, import LogManager global functions
 #if canImport(artiusid_sdk_ios)
-@_exported import artiusid_sdk_ios
+import artiusid_sdk_ios
 #endif
 
 // Provide backward compatibility with ArtiusIDSDK name
