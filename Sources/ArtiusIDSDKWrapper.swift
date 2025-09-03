@@ -104,6 +104,7 @@ public class ArtiusIDSDKWrapper {
             fatalError("ArtiusID SDK dependencies not properly configured")
         }
         configureFirebaseIfAvailable()
+        LogManager.logLevel = logLevel
         print("[ArtiusIDSDKWrapper] configure called with environment: \(String(describing: environment)), logLevel: \(logLevel)")
         // If environment is provided, configure the binary SDK
         if let env = environment {
