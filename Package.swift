@@ -14,13 +14,13 @@ let package = Package(
     targets: [
         .binaryTarget(
             name: "OpenSSL",
-            url: "https://github.com/artiusID/sdk/releases/download/v1.0.180/OpenSSL.xcframework.zip",
-            checksum: "78f5d6b1e09c3ae4dcf2c47b9ec54e3eed1ab6060b8d9bfe0c5fc367d618a9d1"
+            url: "https://github.com/artiusID/sdk/releases/download/v1.0.181/OpenSSL.xcframework.zip",
+            checksum: "54ef749ecf5a273ebee479e4960fd0d0b71026f4516dbd10e4ab9c472296b444"
         ),
         .binaryTarget(
             name: "artiusid_sdk_ios",
-            url: "https://github.com/artiusID/sdk/releases/download/v1.0.180/artiusid_sdk_ios.xcframework.zip",
-            checksum: "a8daed730bc772ee1af2b76173faaba0a24196e981de2b72008272c6a1d881d7"
+            url: "https://github.com/artiusID/sdk/releases/download/v1.0.181/artiusid_sdk_ios.xcframework.zip",
+            checksum: "6c75d21cd2b830c6a7d44f6e5cee995e01847cea40ff61dd245401356afa32f2"
         ),
         .target(
             name: "ArtiusIDSDKWrapper",
