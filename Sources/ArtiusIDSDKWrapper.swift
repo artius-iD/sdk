@@ -95,10 +95,10 @@ public class ArtiusIDSDKWrapper {
 
     // MARK: - Core SDK Interface
 
-    /// Configure SDK with automatic dependency initialization
+    /// Configure SDK with environment and optional baseURL
     /// - Parameters:
     ///   - environment: Target environment for API calls
-    ///   - baseURL: Optional custom base URL for API endpoints
+    ///   - baseURL: Optional custom base URL for API endpoints (Note: baseURL support pending binary framework update)
     ///   - logLevel: Logging level for SDK operations
     public func configure(environment: Environments? = nil, baseURL: String? = nil, logLevel: LogLevel = .info) {
         // Initialize dependencies first
@@ -112,7 +112,8 @@ public class ArtiusIDSDKWrapper {
         // If environment is provided, configure the binary SDK
         if let env = environment {
             print("[ArtiusIDSDKWrapper] Calling ArtiusIDSDK.shared.configure with environment: \(env), baseURL: \(baseURL ?? "<default>")")
-            ArtiusIDSDK.shared.configure(environment: env, baseURL: baseURL)
+            // TODO: Need to update binary framework to support baseURL parameter
+            ArtiusIDSDK.shared.configure(environment: env)
         }
         print("[ArtiusIDSDKWrapper] initialized for iPhone and iPad")
     }
