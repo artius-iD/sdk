@@ -96,7 +96,11 @@ public class ArtiusIDSDKWrapper {
     // MARK: - Core SDK Interface
 
     /// Configure SDK with automatic dependency initialization
-    public func configure(environment: Environments? = nil, logLevel: LogLevel = .info) {
+    /// - Parameters:
+    ///   - environment: Target environment for API calls
+    ///   - baseURL: Optional custom base URL for API endpoints
+    ///   - logLevel: Logging level for SDK operations
+    public func configure(environment: Environments? = nil, baseURL: String? = nil, logLevel: LogLevel = .info) {
         // Initialize dependencies first
         ArtiusIDSDKDependencies.initialize()
         guard ArtiusIDSDKDependencies.verifyDependencies() else {
@@ -104,11 +108,11 @@ public class ArtiusIDSDKWrapper {
         }
         configureFirebaseIfAvailable()
         LogManager.setLogLevel(logLevel)
-        print("[ArtiusIDSDKWrapper] configure called with environment: \(String(describing: environment)), logLevel: \(logLevel)")
+        print("[ArtiusIDSDKWrapper] configure called with environment: \(String(describing: environment)), baseURL: \(baseURL ?? "<default>"), logLevel: \(logLevel)")
         // If environment is provided, configure the binary SDK
         if let env = environment {
-            print("[ArtiusIDSDKWrapper] Calling ArtiusIDSDK.shared.configure with environment: \(env)")
-            ArtiusIDSDK.shared.configure(environment: env)
+            print("[ArtiusIDSDKWrapper] Calling ArtiusIDSDK.shared.configure with environment: \(env), baseURL: \(baseURL ?? "<default>")")
+            ArtiusIDSDK.shared.configure(environment: env, baseURL: baseURL)
         }
         print("[ArtiusIDSDKWrapper] initialized for iPhone and iPad")
     }
@@ -146,6 +150,15 @@ public class ArtiusIDSDKWrapper {
     /// Check if SDK is ready for verification (FCM token available)
     public func isReadyForVerification() -> Bool {
     return getCurrentFCMToken() != nil
+    }
+
+    /// Configure SDK with custom base URL and environment
+    /// - Parameters:
+    ///   - environment: Target environment for API calls
+    ///   - baseURL: Custom base URL for API endpoints
+    ///   - logLevel: Logging level for SDK operations
+    public func configureWithCustomDomain(environment: Environments, baseURL: String, logLevel: LogLevel = .info) {
+        configure(environment: environment, baseURL: baseURL, logLevel: logLevel)
     }
 
     // MARK: - Private Implementation
@@ -205,8 +218,8 @@ public struct ArtiusIDSDKInfo {
 // MARK: - Public Convenience API
 public typealias ArtiusID = ArtiusIDSDKWrapper
 
-public func configureArtiusIDSDK(environment: Environments? = nil, logLevel: LogLevel = .info) {
-    ArtiusIDSDKWrapper.shared.configure(environment: environment, logLevel: logLevel)
+public func configureArtiusIDSDK(environment: Environments? = nil, baseURL: String? = nil, logLevel: LogLevel = .info) {
+    ArtiusIDSDKWrapper.shared.configure(environment: environment, baseURL: baseURL, logLevel: logLevel)
 }
 
 public func artiusIDSDKVersion() -> String {
