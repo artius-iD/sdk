@@ -5,9 +5,53 @@
 import Foundation
 import Security
 
-#if canImport(artiusid_sdk_ios)
+#if canImport(artiusid_sdk_ios)  
 import artiusid_sdk_ios
 #endif
+
+// MARK: - Temporary Type Definitions (until binary framework is updated)
+// TODO: Remove these when binary framework includes updated types with baseURL support
+public enum Environments: String, CaseIterable {
+    case development = "development"
+    case production = "production"
+    case qa = "qa"
+    case staging = "staging"
+    case sandbox = "sandbox"
+    
+    // Backward compatibility cases (capitalized)
+    case Development = "dev"
+    case Production = "prod"
+    case QA = "qa-env"
+    case Staging = "stage"
+    case Sandbox = "sandbox-env"
+}
+
+public enum LogLevel: Int, CaseIterable {
+    case debug = 0
+    case info = 1
+    case warning = 2
+    case error = 3
+}
+
+// Temporary LogManager implementation
+public class LogManager {
+    public static func setLogLevel(_ level: LogLevel) {
+        print("[LogManager] Log level set to: \(level)")
+    }
+}
+
+// Temporary ArtiusIDSDK stub (until binary framework is accessible)
+public class ArtiusIDSDK {
+    public static let shared = ArtiusIDSDK()
+    
+    public func configure(environment: Environments) {
+        print("[ArtiusIDSDK] Configure called with environment: \(environment)")
+    }
+    
+    public func updateFCMToken(_ token: String) {
+        print("[ArtiusIDSDK] FCM token updated: \(token)")
+    }
+}
 
 // Provide backward compatibility with ArtiusIDSDK name
 //public typealias ArtiusIDSDK = ArtiusIDSDKWrapper
