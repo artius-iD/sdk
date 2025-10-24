@@ -96,7 +96,7 @@ public class ArtiusIDSDKWrapper {
     // MARK: - Core SDK Interface
 
     /// Configure SDK with automatic dependency initialization
-    public func configure(environment: Environments? = nil, logLevel: LogLevel = .info) {
+    public func configure(environment: Environments? = nil, logLevel: LogLevel = .info), baseURL = String {
         // Initialize dependencies first
         ArtiusIDSDKDependencies.initialize()
         guard ArtiusIDSDKDependencies.verifyDependencies() else {
@@ -107,8 +107,8 @@ public class ArtiusIDSDKWrapper {
         print("[ArtiusIDSDKWrapper] configure called with environment: \(String(describing: environment)), logLevel: \(logLevel)")
         // If environment is provided, configure the binary SDK
         if let env = environment {
-            print("[ArtiusIDSDKWrapper] Calling ArtiusIDSDK.shared.configure with environment: \(env)")
-            ArtiusIDSDK.shared.configure(environment: env)
+            print("[ArtiusIDSDKWrapper] Calling ArtiusIDSDK.shared.configure with environment: \(env) and baseURL: \(baseURL)")
+            ArtiusIDSDK.shared.configure(environment: env, baseUrl)
         }
         print("[ArtiusIDSDKWrapper] initialized for iPhone and iPad")
     }
