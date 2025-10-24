@@ -108,7 +108,7 @@ public class ArtiusIDSDKWrapper {
         // If environment is provided, configure the binary SDK
         if let env = environment {
             print("[ArtiusIDSDKWrapper] Calling ArtiusIDSDK.shared.configure with environment: \(env) and baseURL: \(baseURL)")
-            ArtiusIDSDK.shared.configure(environment: env, baseUrl)
+            ArtiusIDSDK.shared.configure(environment: env, baseURL: baseURL)
         }
         print("[ArtiusIDSDKWrapper] initialized for iPhone and iPad")
     }
