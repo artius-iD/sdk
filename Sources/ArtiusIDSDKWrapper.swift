@@ -205,8 +205,8 @@ public struct ArtiusIDSDKInfo {
 // MARK: - Public Convenience API
 public typealias ArtiusID = ArtiusIDSDKWrapper
 
-public func configureArtiusIDSDK(environment: Environments? = nil, logLevel: LogLevel = .info) {
-    ArtiusIDSDKWrapper.shared.configure(environment: environment, logLevel: logLevel)
+public func configureArtiusIDSDK(environment: Environments? = nil, logLevel: LogLevel = .info, baseURL: String = "") {
+    ArtiusIDSDKWrapper.shared.configure(environment: environment, logLevel: logLevel, baseURL: baseURL)
 }
 
 public func artiusIDSDKVersion() -> String {
