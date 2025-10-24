@@ -96,7 +96,7 @@ public class ArtiusIDSDKWrapper {
     // MARK: - Core SDK Interface
 
     /// Configure SDK with automatic dependency initialization
-    public func configure(environment: Environments? = nil, logLevel: LogLevel = .info), baseURL = String {
+    public func configure(environment: Environments? = nil, logLevel: LogLevel = .info, baseURL: String = "") {
         // Initialize dependencies first
         ArtiusIDSDKDependencies.initialize()
         guard ArtiusIDSDKDependencies.verifyDependencies() else {
