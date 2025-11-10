@@ -16,6 +16,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.1] - 2025-11-10
+
+### Fixed
+- **Documentation**: Updated CLIENT-README.md version references from 1.0.x to 2.0.x
+  - Updated SDK version badge to show 2.0.x
+  - Updated SPM installation examples to use version 2.0.0
+  - Updated version range recommendations (2.0.0 < 3.0.0)
+
+---
+
 ## [2.0.0] - 2025-11-10
 
 ### Added

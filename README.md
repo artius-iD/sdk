@@ -1,6 +1,6 @@
 # ArtiusID iOS SDK
 
-**Version:** 1.0.x  
+**Version:** 2.0.x  
 **Minimum iOS Version:** iOS 14.0+  
 **Swift:** 5.9+
 
@@ -28,7 +28,7 @@ Enterprise-grade identity verification SDK for iOS applications. Provides docume
 
 4. **Select Version**
    - **Dependency Rule:** Up to Next Major Version
-   - **Version:** 1.0.0 < 2.0.0 (recommended)
+   - **Version:** 2.0.0 < 3.0.0 (recommended)
    - Click **Add Package**
 
 5. **Add to Target**
@@ -48,7 +48,7 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://github.com/artius-iD/sdk",
-            from: "1.0.0"
+            from: "2.0.0"
         )
     ],
     targets: [
