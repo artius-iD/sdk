@@ -16,6 +16,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.5] - 2025-11-12
+
+### Added
+- **Template-Based URL Configuration**: Flexible URL template system for environment management
+  - Separate `urlTemplate` and domain parameters for mobile and registration services
+  - Token-based system with `#env#` and `#domain#` placeholders
+  - Support for both new (sandbox) and legacy (dev/staging) URL patterns
+  - `CUSTOMER_IMPLEMENTATION_GUIDE.md` - Comprehensive implementation guide for customers
+  - `MIGRATION_GUIDE_v2.0.5.md` - Migration guide from previous versions
+
+### Changed
+- **SDK Configuration API**: Updated `configure()` method signature
+  - Now accepts 5 parameters: `environment`, `urlTemplate`, `mobileDomain`, `registrationUrlTemplate`, `registrationDomain`
+  - Provides explicit control over both mobile and registration service URLs
+  - Breaking change: Clients must update configuration calls
+- **Sample App**: Updated to demonstrate new template-based configuration pattern
+
+### Fixed
+- **UI Consistency**: Improved instruction tip cells across all scan intro views
+  - Fixed small "Remove glasses" text by removing `minimumScaleFactor`
+  - Added fixed height (50) to all tip cells for uniform sizing
+  - Increased font size from 14 to 16 for better readability
+  - Fixed empty cells to match height of cells with content
+  - Applied consistent styling to FaceScanIntroView, FaceScanRetryView, ScanChipIntroView, ScanIDIntroView, and ScanIDBackIntroView
+
+### Documentation
+- **Customer Implementation Guide**: Added comprehensive guide with examples for all environments
+- **Migration Guide**: Created detailed v2.0.5 migration guide with before/after comparisons
+- **Internal Documentation**: Moved TriNet-specific and internal docs to .gitignore
+
+---
+
 ## [2.0.1] - 2025-11-10
 
 ### Fixed
