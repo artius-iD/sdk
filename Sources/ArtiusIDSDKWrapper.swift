@@ -98,14 +98,30 @@ public class ArtiusIDSDKWrapper {
     /// Configure SDK with automatic dependency initialization
     /// - Parameters:
     ///   - environment: Target environment (.sandbox, .development, .staging, .production)
-    ///   - baseURL: Base URL for mobile API services (e.g., "https://sandbox.mobile.artiusid.dev")
+    ///   - urlTemplate: URL template for mobile services (e.g., "https://#env#.#domain#")
+    ///   - mobileDomain: Domain for mobile services (e.g., "mobile.artiusid.dev")
+    ///   - registrationUrlTemplate: URL template for registration services
+    ///   - registrationDomain: Domain for registration services (e.g., "registration.artiusid.dev")
     ///   - logLevel: Logging level for SDK operations
-    /// - Note: You must provide the complete base URL for your environment:
-    ///   - Sandbox: "https://sandbox.mobile.artiusid.dev"
-    ///   - Development: "https://service-mobile.dev.artiusid.dev"
-    ///   - Staging: "https://service-mobile.stage.artiusid.dev"
-    ///   - Production: "https://service-mobile.artiusid.dev"
-    public func configure(environment: Environments? = nil, baseURL: String, logLevel: LogLevel = .info) {
+    /// - Note: Client provides template + domain, SDK replaces tokens:
+    ///   - #env# → environment prefix (sandbox, dev, stage, or empty)
+    ///   - #domain# → provided domain string
+    ///   Example for Sandbox:
+    ///     urlTemplate: "https://#env#.#domain#"
+    ///     mobileDomain: "mobile.artiusid.dev"
+    ///     Result: "https://sandbox.mobile.artiusid.dev"
+    ///   Example for Development:
+    ///     urlTemplate: "https://#domain#"
+    ///     mobileDomain: "service-mobile.dev.artiusid.dev"
+    ///     Result: "https://service-mobile.dev.artiusid.dev"
+    public func configure(
+        environment: Environments? = nil,
+        urlTemplate: String,
+        mobileDomain: String,
+        registrationUrlTemplate: String,
+        registrationDomain: String,
+        logLevel: LogLevel = .info
+    ) {
         // Initialize dependencies first
         ArtiusIDSDKDependencies.initialize()
         guard ArtiusIDSDKDependencies.verifyDependencies() else {
@@ -113,13 +129,26 @@ public class ArtiusIDSDKWrapper {
         }
         configureFirebaseIfAvailable()
         LogManager.setLogLevel(logLevel)
-        print("[ArtiusIDSDKWrapper] configure called with environment: \(String(describing: environment)), baseURL: \(baseURL), logLevel: \(logLevel)")
+        
+        print("[ArtiusIDSDKWrapper] Configuration:")
+        print("  Environment: \(String(describing: environment))")
+        print("  URL Template: \(urlTemplate)")
+        print("  Mobile Domain: \(mobileDomain)")
+        print("  Registration Template: \(registrationUrlTemplate)")
+        print("  Registration Domain: \(registrationDomain)")
+        print("  Log Level: \(logLevel)")
+        
         // If environment is provided, configure the binary SDK
         if let env = environment {
-            print("[ArtiusIDSDKWrapper] Calling ArtiusIDSDK.shared.configure with environment: \(env) and baseURL: \(baseURL)")
-            ArtiusIDSDK.shared.configure(environment: env, baseURL: baseURL)
+            ArtiusIDSDK.shared.configure(
+                environment: env,
+                urlTemplate: urlTemplate,
+                mobileDomain: mobileDomain,
+                registrationUrlTemplate: registrationUrlTemplate,
+                registrationDomain: registrationDomain
+            )
         }
-        print("[ArtiusIDSDKWrapper] initialized for iPhone and iPad")
+        print("[ArtiusIDSDKWrapper] SDK initialized successfully")
     }
 
     /// Update FCM token securely in keychain
@@ -214,8 +243,22 @@ public struct ArtiusIDSDKInfo {
 // MARK: - Public Convenience API
 public typealias ArtiusID = ArtiusIDSDKWrapper
 
-public func configureArtiusIDSDK(environment: Environments? = nil, baseURL: String, logLevel: LogLevel = .info) {
-    ArtiusIDSDKWrapper.shared.configure(environment: environment, baseURL: baseURL, logLevel: logLevel)
+public func configureArtiusIDSDK(
+    environment: Environments? = nil,
+    urlTemplate: String,
+    mobileDomain: String,
+    registrationUrlTemplate: String,
+    registrationDomain: String,
+    logLevel: LogLevel = .info
+) {
+    ArtiusIDSDKWrapper.shared.configure(
+        environment: environment,
+        urlTemplate: urlTemplate,
+        mobileDomain: mobileDomain,
+        registrationUrlTemplate: registrationUrlTemplate,
+        registrationDomain: registrationDomain,
+        logLevel: logLevel
+    )
 }
 
 public func artiusIDSDKVersion() -> String {
