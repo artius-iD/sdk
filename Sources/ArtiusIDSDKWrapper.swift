@@ -98,12 +98,14 @@ public class ArtiusIDSDKWrapper {
     /// Configure SDK with automatic dependency initialization
     /// - Parameters:
     ///   - environment: Target environment (.sandbox, .development, .staging, .production)
+    ///   - baseURL: Base URL for mobile API services (e.g., "https://sandbox.mobile.artiusid.dev")
     ///   - logLevel: Logging level for SDK operations
-    /// - Note: URLs are built automatically based on environment (matches Android SDK)
-    ///   - Sandbox: sandbox.mobile.artiusid.dev
-    ///   - Development: service-mobile.dev.artiusid.dev
-    ///   - Staging: service-mobile.stage.artiusid.dev
-    public func configure(environment: Environments? = nil, logLevel: LogLevel = .info) {
+    /// - Note: You must provide the complete base URL for your environment:
+    ///   - Sandbox: "https://sandbox.mobile.artiusid.dev"
+    ///   - Development: "https://service-mobile.dev.artiusid.dev"
+    ///   - Staging: "https://service-mobile.stage.artiusid.dev"
+    ///   - Production: "https://service-mobile.artiusid.dev"
+    public func configure(environment: Environments? = nil, baseURL: String, logLevel: LogLevel = .info) {
         // Initialize dependencies first
         ArtiusIDSDKDependencies.initialize()
         guard ArtiusIDSDKDependencies.verifyDependencies() else {
@@ -111,12 +113,11 @@ public class ArtiusIDSDKWrapper {
         }
         configureFirebaseIfAvailable()
         LogManager.setLogLevel(logLevel)
-        print("[ArtiusIDSDKWrapper] configure called with environment: \(String(describing: environment)), logLevel: \(logLevel)")
+        print("[ArtiusIDSDKWrapper] configure called with environment: \(String(describing: environment)), baseURL: \(baseURL), logLevel: \(logLevel)")
         // If environment is provided, configure the binary SDK
         if let env = environment {
-            print("[ArtiusIDSDKWrapper] Calling ArtiusIDSDK.shared.configure with environment: \(env)")
-            print("[ArtiusIDSDKWrapper] URLs will be built automatically based on environment")
-            ArtiusIDSDK.shared.configure(environment: env)
+            print("[ArtiusIDSDKWrapper] Calling ArtiusIDSDK.shared.configure with environment: \(env) and baseURL: \(baseURL)")
+            ArtiusIDSDK.shared.configure(environment: env, baseURL: baseURL)
         }
         print("[ArtiusIDSDKWrapper] initialized for iPhone and iPad")
     }
@@ -213,8 +214,8 @@ public struct ArtiusIDSDKInfo {
 // MARK: - Public Convenience API
 public typealias ArtiusID = ArtiusIDSDKWrapper
 
-public func configureArtiusIDSDK(environment: Environments? = nil, logLevel: LogLevel = .info) {
-    ArtiusIDSDKWrapper.shared.configure(environment: environment, logLevel: logLevel)
+public func configureArtiusIDSDK(environment: Environments? = nil, baseURL: String, logLevel: LogLevel = .info) {
+    ArtiusIDSDKWrapper.shared.configure(environment: environment, baseURL: baseURL, logLevel: logLevel)
 }
 
 public func artiusIDSDKVersion() -> String {
