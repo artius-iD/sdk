@@ -1,118 +1,96 @@
-# ArtiusID iOS SDK
+# ArtiusID iOS SDK - Client Implementation Guide
 
-**Version:** 2.0.x  
-**Minimum iOS Version:** iOS 14.0+  
-**Swift:** 5.9+
-
-Enterprise-grade identity verification SDK for iOS applications. Provides document scanning, face verification, NFC passport reading, and biometric authentication capabilities.
+**SDK Version:** v2.0.12  
+**Date:** November 14, 2025  
+**Target Audience:** Client Application Developers  
+**Status:** ✅ Production Ready
 
 ---
 
-## 📦 Installation
+## 📋 Table of Contents
+
+1. [Overview](#overview)
+2. [Installation](#installation)
+3. [Quick Start](#quick-start)
+4. [Configuration](#configuration)
+5. [Verification Flow](#verification-flow)
+6. [Authentication Flow](#authentication-flow)
+7. [Result Handling](#result-handling)
+8. [Error Handling & Document Recapture](#error-handling--document-recapture)
+9. [Okta ID Integration](#okta-id-integration)
+10. [Theming & Customization](#theming--customization)
+11. [Best Practices](#best-practices)
+12. [Troubleshooting](#troubleshooting)
+13. [API Reference](#api-reference)
+
+---
+
+## 📖 Overview
+
+The ArtiusID iOS SDK provides a complete identity verification and authentication solution for iOS applications. This guide covers all features available in v2.0.11.
+
+### Key Features
+
+- ✅ **Identity Verification** - Face scan + Government ID verification
+- ✅ **Biometric Authentication** - Face-based authentication for returning users
+- ✅ **Document Recapture** - Automatic retry for recoverable document errors
+- ✅ **Okta ID Integration** - Optional Okta ID collection during verification
+- ✅ **Mutual TLS** - Secure API communication with client certificates
+- ✅ **Firebase Cloud Messaging** - Push notification support
+- ✅ **Enhanced Theming** - Complete UI customization
+- ✅ **Localization** - Multi-language support
+
+### Requirements
+
+- iOS 15.0+
+- Xcode 14.0+
+- Swift 5.7+
+- Firebase (client app manages Firebase configuration)
+
+---
+
+## 🚀 Installation
 
 ### Swift Package Manager (Recommended)
 
-#### **Adding to Xcode Project**
-
-1. **Open Your Project in Xcode**
-   - Launch Xcode and open your `.xcodeproj` or `.xcworkspace`
-
-2. **Add Package Dependency**
-   - Go to **File** → **Add Package Dependencies...**
-   - Or select your project in the navigator → **Package Dependencies** tab → **+** button
-
-3. **Enter Repository URL**
+1. In Xcode, go to **File → Add Packages**
+2. Enter the repository URL:
    ```
-   https://github.com/artius-iD/sdk
+   https://github.com/artius-iD/sdk.git
    ```
+3. Select version `2.0.11` or "Up to Next Major Version" from `2.0.11`
+4. Click **Add Package**
 
-4. **Select Version**
-   - **Dependency Rule:** Up to Next Major Version
-   - **Version:** 2.0.0 < 3.0.0 (recommended)
-   - Click **Add Package**
-
-5. **Add to Target**
-   - Select **ArtiusIDSDK** from the list
-   - Choose your app target
-   - Click **Add Package**
-
-#### **Package.swift (For SPM Libraries)**
+### Package.swift
 
 ```swift
-// swift-tools-version: 5.9
-import PackageDescription
-
-let package = Package(
-    name: "YourApp",
-    platforms: [.iOS(.v14)],
-    dependencies: [
-        .package(
-            url: "https://github.com/artius-iD/sdk",
-            from: "2.0.0"
-        )
-    ],
-    targets: [
-        .target(
-            name: "YourApp",
-            dependencies: [
-                .product(name: "ArtiusIDSDK", package: "sdk")
-            ]
-        )
-    ]
-)
+dependencies: [
+    .package(url: "https://github.com/artius-iD/sdk.git", from: "2.0.12")
+]
 ```
 
 ---
 
-## 🚀 Quick Start
+## ⚡ Quick Start
 
-### **1. Import the SDK**
+### 1. Import the SDK
 
 ```swift
-import ArtiusIDSDK
+import artiusid_sdk_ios
 ```
 
-### **2. Configure Info.plist Permissions**
+### 2. Configure the SDK
 
-Add these required permissions to your `Info.plist`:
-
-```xml
-<!-- Camera Access (Required) -->
-<key>NSCameraUsageDescription</key>
-<string>We need camera access to scan your document and verify your identity.</string>
-
-<!-- Face ID (Required for Biometric Auth) -->
-<key>NSFaceIDUsageDescription</key>
-<string>We use Face ID to securely authenticate approval requests.</string>
-
-<!-- NFC (Required for Passport Scanning) -->
-<key>NFCReaderUsageDescription</key>
-<string>We need NFC access to read your passport chip information.</string>
-<key>com.apple.developer.nfc.readersession.formats</key>
-<array>
-    <string>TAG</string>
-</array>
-<key>com.apple.developer.nfc.readersession.iso7816.select-identifiers</key>
-<array>
-    <string>A0000002471001</string>
-</array>
-```
-
-### **3. Initialize the SDK**
+In your app initialization (AppDelegate or SwiftUI App struct):
 
 ```swift
 import SwiftUI
-import ArtiusIDSDK
+import artiusid_sdk_ios
 
 @main
 struct YourApp: App {
     init() {
-        // Initialize SDK with your credentials
-        ArtiusIDSDK.shared.initialize(
-            clientId: YOUR_CLIENT_ID,
-            clientGroupId: YOUR_CLIENT_GROUP_ID,
-            environment: .sandbox  // Use .production for live
-        )
+        configureSDK()
     }
     
     var body: some Scene {
@@ -120,12 +98,25 @@ struct YourApp: App {
             ContentView()
         }
     }
+    
+    private func configureSDK() {
+        ArtiusIDSDKWrapper.shared.configure(
+            environment: .sandbox,
+            baseURL: "https://sandbox.mobile.artiusid.dev",
+            registrationDomain: "sandbox.registration.artiusid.dev",
+            includeOktaIDInVerificationPayload: true,  // Optional: Enable Okta ID
+            logLevel: .debug
+        )
+        
+        print("✅ ArtiusID SDK v\(ArtiusIDSDKInfo.version) configured")
+    }
 }
 ```
 
-### **4. Start Verification Flow**
+### 3. Start Verification
 
 ```swift
+import SwiftUI
 import ArtiusIDSDK
 
 struct ContentView: View {
@@ -137,25 +128,26 @@ struct ContentView: View {
         }
         .fullScreenCover(isPresented: $showVerification) {
             ArtiusIDVerificationView(
-                configuration: .init(
+                configuration: ArtiusIDVerificationView.Configuration(
                     clientId: YOUR_CLIENT_ID,
-                    clientGroupId: YOUR_CLIENT_GROUP_ID,
                     environment: .sandbox
                 ),
                 onCompletion: { result in
-                    if result.isSuccessful {
-                        print("✅ Verification successful!")
-                        print("Account: \(result.accountNumber ?? "N/A")")
-                    } else {
-                        print("❌ Verification failed: \(result.errorMessage ?? "Unknown")")
-                    }
                     showVerification = false
+                    handleResult(result)
                 },
                 onCancel: {
-                    print("User cancelled verification")
                     showVerification = false
                 }
             )
+        }
+    }
+    
+    func handleResult(_ result: VerificationResult) {
+        if result.isSuccessful {
+            print("✅ Verified: \(result.fullName ?? "Unknown")")
+        } else {
+            print("❌ Failed: \(result.errorMessage ?? "Unknown")")
         }
     }
 }
@@ -163,186 +155,842 @@ struct ContentView: View {
 
 ---
 
-## 🎨 Customization
+## ⚙️ Configuration
 
-### **Theme Configuration**
+### Environment Configuration
 
-Customize the SDK's appearance to match your brand:
+The SDK supports multiple environments:
+
+| Environment | Base URL | Registration Domain | Use Case |
+|------------|----------|---------------------|----------|
+| **Sandbox** | `https://sandbox.mobile.artiusid.dev` | `sandbox.registration.artiusid.dev` | Development & Testing |
+| **Development** | `https://service-mobile.dev.artiusid.dev` | `service-registration.dev.artiusid.dev` | Internal Development |
+| **Staging** | `https://service-mobile.stage.artiusid.dev` | `service-registration.stage.artiusid.dev` | Pre-production UAT |
+| **Production** | `https://service-mobile.artiusid.dev` | `service-registration.artiusid.dev` | Live Production |
+
+### Configuration Parameters
 
 ```swift
-let customTheme = SDKColorScheme(
-    // Primary Colors
-    primaryColorHex: "#1E40AF",      // Your brand primary
-    secondaryColorHex: "#F59E0B",    // Your brand secondary
-    
-    // Background
-    backgroundColorHex: "#F9FAFB",   // Light background
-    
-    // Text Colors
-    onBackgroundColorHex: "#111827", // Dark text
-    
-    // Buttons
-    primaryButtonColorHex: "#1E40AF",
-    primaryButtonTextColorHex: "#FFFFFF"
+ArtiusIDSDKWrapper.shared.configure(
+    environment: Environments,              // Required: .sandbox, .development, .staging, .production
+    baseURL: String,                        // Required: Base URL for mobile services
+    registrationDomain: String,             // Required: Domain for certificate registration
+    includeOktaIDInVerificationPayload: Bool = true,  // Optional: Enable Okta ID collection
+    logLevel: LogLevel = .info              // Optional: .debug, .info, .warning, .error
 )
-
-ArtiusIDSDK.shared.updateTheme(customTheme)
 ```
 
-### **Image Overrides**
+### Configuration Examples
+
+#### Development Configuration
+
+```swift
+#if DEBUG
+ArtiusIDSDKWrapper.shared.configure(
+    environment: .sandbox,
+    baseURL: "https://sandbox.mobile.artiusid.dev",
+    registrationDomain: "sandbox.registration.artiusid.dev",
+    includeOktaIDInVerificationPayload: true,
+    logLevel: .debug
+)
+#else
+ArtiusIDSDKWrapper.shared.configure(
+    environment: .production,
+    baseURL: "https://service-mobile.artiusid.dev",
+    registrationDomain: "service-registration.artiusid.dev",
+    includeOktaIDInVerificationPayload: true,
+    logLevel: .warning
+)
+#endif
+```
+
+#### Dynamic Environment Switching
+
+```swift
+class AppConfiguration {
+    enum Environment {
+        case sandbox, staging, production
+        
+        var sdkConfig: (env: Environments, baseURL: String, regDomain: String) {
+            switch self {
+            case .sandbox:
+                return (.sandbox, 
+                       "https://sandbox.mobile.artiusid.dev",
+                       "sandbox.registration.artiusid.dev")
+            case .staging:
+                return (.staging, 
+                       "https://service-mobile.stage.artiusid.dev",
+                       "service-registration.stage.artiusid.dev")
+            case .production:
+                return (.production, 
+                       "https://service-mobile.artiusid.dev",
+                       "service-registration.artiusid.dev")
+            }
+        }
+    }
+    
+    static func configure(for environment: Environment) {
+        let config = environment.sdkConfig
+        ArtiusIDSDKWrapper.shared.configure(
+            environment: config.env,
+            baseURL: config.baseURL,
+            registrationDomain: config.regDomain,
+            logLevel: .debug
+        )
+    }
+}
+
+// Usage:
+AppConfiguration.configure(for: .sandbox)
+```
+
+---
+
+## 🎯 Verification Flow
+
+### Basic Verification
+
+```swift
+import SwiftUI
+import ArtiusIDSDK
+
+struct VerificationView: View {
+    @State private var showVerification = false
+    @State private var showResult = false
+    @State private var resultMessage = ""
+    
+    var body: some View {
+        VStack {
+            Button("Start Verification") {
+                showVerification = true
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .fullScreenCover(isPresented: $showVerification) {
+            ArtiusIDVerificationView(
+                configuration: createConfiguration(),
+                onCompletion: { result in
+                    showVerification = false
+                    handleVerificationResult(result)
+                },
+                onCancel: {
+                    showVerification = false
+                    print("User cancelled verification")
+                }
+            )
+        }
+        .alert("Verification Result", isPresented: $showResult) {
+            Button("OK") { }
+        } message: {
+            Text(resultMessage)
+        }
+    }
+    
+    func createConfiguration() -> ArtiusIDVerificationView.Configuration {
+        return ArtiusIDVerificationView.Configuration(
+            clientId: YOUR_CLIENT_ID,
+            clientGroupId: YOUR_CLIENT_GROUP_ID,  // Optional
+            environment: .sandbox
+        )
+    }
+    
+    func handleVerificationResult(_ result: VerificationResult) {
+        // Step 1: Check for document recapture (v2.0.6+)
+        if result.requiresRecapture, let recaptureType = result.recaptureType {
+            resultMessage = """
+            Document recapture required: \(recaptureType.title)
+            
+            \(recaptureType.message)
+            
+            You can restart verification to try again.
+            """
+            showResult = true
+            return
+        }
+        
+        // Step 2: Handle success or failure
+        if result.isSuccessful {
+            resultMessage = """
+            ✅ Verification Successful!
+            
+            Name: \(result.fullName ?? "N/A")
+            Account: \(result.accountNumber ?? "N/A")
+            Score: \(Int(result.verificationScore * 100))%
+            """
+            
+            // Include Okta ID if collected
+            if let oktaId = result.oktaId {
+                resultMessage += "\nOkta ID: \(oktaId)"
+            }
+        } else {
+            resultMessage = """
+            ❌ Verification Failed
+            
+            \(result.errorMessage ?? "Unknown error")
+            """
+        }
+        showResult = true
+    }
+}
+```
+
+### UIKit Integration
+
+```swift
+import UIKit
+import SwiftUI
+import ArtiusIDSDK
+
+class ViewController: UIViewController {
+    
+    func startVerification() {
+        let configuration = ArtiusIDVerificationView.Configuration(
+            clientId: YOUR_CLIENT_ID,
+            environment: .sandbox
+        )
+        
+        let verificationView = ArtiusIDVerificationView(
+            configuration: configuration,
+            onCompletion: { [weak self] result in
+                self?.dismiss(animated: true) {
+                    self?.handleVerificationResult(result)
+                }
+            },
+            onCancel: { [weak self] in
+                self?.dismiss(animated: true)
+                print("User cancelled verification")
+            }
+        )
+        
+        let hostingController = UIHostingController(rootView: verificationView)
+        hostingController.modalPresentationStyle = .fullScreen
+        present(hostingController, animated: true)
+    }
+    
+    func handleVerificationResult(_ result: VerificationResult) {
+        if result.requiresRecapture, let recaptureType = result.recaptureType {
+            showAlert(
+                title: "Document Recapture Required",
+                message: "\(recaptureType.title)\n\n\(recaptureType.message)"
+            )
+            return
+        }
+        
+        if result.isSuccessful {
+            showAlert(
+                title: "✅ Verification Successful",
+                message: "Name: \(result.fullName ?? "N/A")\nAccount: \(result.accountNumber ?? "N/A")"
+            )
+        } else {
+            showAlert(
+                title: "❌ Verification Failed",
+                message: result.errorMessage ?? "Unknown error"
+            )
+        }
+    }
+    
+    func showAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+}
+```
+
+---
+
+## 🔐 Authentication Flow
+
+### Basic Authentication
+
+```swift
+import SwiftUI
+import ArtiusIDSDK
+
+struct AuthenticationView: View {
+    @State private var showAuthentication = false
+    @State private var authResult: String = ""
+    
+    var body: some View {
+        VStack {
+            Button("Authenticate") {
+                showAuthentication = true
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .fullScreenCover(isPresented: $showAuthentication) {
+            ArtiusIDAuthenticationView(
+                clientId: YOUR_CLIENT_ID,
+                accountNumber: "USER_ACCOUNT_NUMBER",  // From previous verification
+                onCompletion: { result in
+                    showAuthentication = false
+                    handleAuthResult(result)
+                },
+                onCancel: {
+                    showAuthentication = false
+                }
+            )
+        }
+    }
+    
+    func handleAuthResult(_ result: AuthenticationResult) {
+        if result.isSuccessful {
+            print("✅ Authentication successful!")
+            print("   Account: \(result.accountNumber ?? "N/A")")
+            print("   Score: \(result.authenticationScore)")
+        } else {
+            print("❌ Authentication failed: \(result.errorMessage ?? "Unknown")")
+        }
+    }
+}
+```
+
+---
+
+## 📊 Result Handling
+
+### VerificationResult Structure
+
+```swift
+public struct VerificationResult {
+    // Success indicators
+    public let isSuccessful: Bool
+    public let verificationScore: Double
+    
+    // User information
+    public let accountNumber: String?
+    public let fullName: String?
+    public let firstName: String?
+    public let lastName: String?
+    public let middleName: String?
+    public let dateOfBirth: String?
+    
+    // Document information
+    public let documentNumber: String?
+    public let documentType: String?
+    public let expirationDate: String?
+    public let issueDate: String?
+    
+    // Address information
+    public let address: String?
+    public let city: String?
+    public let state: String?
+    public let zipCode: String?
+    public let country: String?
+    
+    // Error handling
+    public let errorMessage: String?
+    public let errorCode: Int?
+    
+    // Document recapture (v2.0.6+)
+    public let requiresRecapture: Bool
+    public let recaptureType: DocumentRecaptureType?
+    
+    // Okta ID (v2.0.11+)
+    public let oktaId: String?
+}
+```
+
+### AuthenticationResult Structure
+
+```swift
+public struct AuthenticationResult {
+    public let isSuccessful: Bool
+    public let authenticationScore: Double
+    public let accountNumber: String?
+    public let errorMessage: String?
+    public let errorCode: Int?
+}
+```
+
+### Complete Result Handler
+
+```swift
+func handleVerificationResult(_ result: VerificationResult) {
+    print("========================================")
+    print("VERIFICATION RESULT")
+    print("========================================")
+    
+    // STEP 1: Check for document recapture (v2.0.6+)
+    if result.requiresRecapture, let recaptureType = result.recaptureType {
+        print("⚠️ Document Recapture Required")
+        print("   Type: \(recaptureType.title)")
+        print("   Message: \(recaptureType.message)")
+        print("   Action: \(recaptureType.actionText)")
+        
+        // User cancelled the recapture - they can restart to try again
+        showRecaptureAlert(recaptureType)
+        return
+    }
+    
+    // STEP 2: Handle success
+    if result.isSuccessful {
+        print("✅ SUCCESS")
+        print("   Account Number: \(result.accountNumber ?? "N/A")")
+        print("   Full Name: \(result.fullName ?? "N/A")")
+        print("   DOB: \(result.dateOfBirth ?? "N/A")")
+        print("   Document: \(result.documentType ?? "N/A") - \(result.documentNumber ?? "N/A")")
+        print("   Address: \(result.address ?? "N/A"), \(result.city ?? "N/A"), \(result.state ?? "N/A")")
+        print("   Score: \(Int(result.verificationScore * 100))%")
+        
+        // Check for Okta ID (v2.0.11+)
+        if let oktaId = result.oktaId {
+            print("   Okta ID: \(oktaId)")
+            linkOktaAccount(oktaId, accountNumber: result.accountNumber)
+        }
+        
+        // Store account number for future authentication
+        saveAccountNumber(result.accountNumber)
+        
+        showSuccessAlert(result)
+    }
+    // STEP 3: Handle failure
+    else {
+        print("❌ FAILED")
+        print("   Error: \(result.errorMessage ?? "Unknown error")")
+        print("   Code: \(result.errorCode ?? 0)")
+        
+        showFailureAlert(result)
+    }
+    
+    print("========================================")
+}
+```
+
+---
+
+## 🔄 Error Handling & Document Recapture
+
+### Overview
+
+Starting in v2.0.6, error codes **600-604** trigger automatic document recapture instead of permanent failure. This allows users to retry without restarting the entire verification flow.
+
+### Recapture-able Error Codes
+
+| Code | Error Type | Description | Retry Action |
+|------|-----------|-------------|--------------|
+| **600** | OCR Error | Document text unclear | Recapture document front |
+| **601** | MRZ/Barcode Error | Passport MRZ or ID barcode unclear | Recapture document (passport or ID back) |
+| **602** | Back Error | State ID back unclear | Recapture ID back |
+| **603** | Quality Error | Poor image quality | Retake photo with better lighting |
+| **604** | NFC Timeout | Chip read timeout | Retry NFC scan or continue |
+
+### Permanent Failures (No Recapture)
+
+| Code | Error Type | Description |
+|------|-----------|-------------|
+| **605** | Document Validation Failed | Document failed security checks |
+| **400** | General Error | Generic API error |
+| **500** | Server Error | Internal server error |
+
+### Implementation
+
+```swift
+func handleVerificationResult(_ result: VerificationResult) {
+    // ✅ ALWAYS check requiresRecapture FIRST
+    if result.requiresRecapture, let recaptureType = result.recaptureType {
+        // This is a recoverable error (600-604)
+        // SDK already showed the DocumentRecaptureNotificationView
+        // User either:
+        // 1. Successfully retried → flow continues (you won't get this result)
+        // 2. Cancelled → SDK dismissed, you get this result
+        
+        print("⚠️ Recapture Required:")
+        print("   Type: \(recaptureType.title)")
+        print("   Message: \(recaptureType.message)")
+        
+        showAlert(
+            title: recaptureType.title,
+            message: "\(recaptureType.message)\n\nYou can restart verification to try again.",
+            actions: [
+                ("Restart", { self.restartVerification() }),
+                ("Cancel", nil)
+            ]
+        )
+        return
+    }
+    
+    // Normal success/failure handling...
+    if result.isSuccessful {
+        handleSuccess(result)
+    } else {
+        handlePermanentFailure(result)
+    }
+}
+```
+
+### DocumentRecaptureType
+
+```swift
+public enum DocumentRecaptureType {
+    case passportMRZError       // Error 601 - Passport MRZ unclear
+    case passportOCRError       // Error 600 - Passport text unclear
+    case stateIdFrontError      // Error 600 - State ID front unclear
+    case stateIdBackError       // Error 602 - State ID back unclear
+    case stateIdBarcodeError    // Error 601 - State ID barcode unclear
+    case imageQualityError      // Error 603 - Poor image quality
+    case nfcTimeoutError        // Error 604 - NFC chip read timeout
+    case generalAPIError        // Other API errors
+    
+    public var title: String {
+        // User-friendly title like "Government Passport MRZ Issue"
+    }
+    
+    public var message: String {
+        // Detailed explanation and instructions for the user
+    }
+    
+    public var actionText: String {
+        // Button text like "Recapture Government Passport"
+    }
+}
+```
+
+### User Experience
+
+When a recapture-able error occurs (600-604):
+
+1. SDK automatically shows `DocumentRecaptureNotificationView`
+2. User sees error-specific instructions
+3. User can tap "Recapture" button to retry immediately
+4. SDK navigates back to the appropriate scan screen
+5. Previous scan data is cleared
+6. User retakes photo
+7. Verification continues
+
+If user taps "Cancel" instead:
+- SDK dismisses
+- Your app receives result with `requiresRecapture = true`
+- You can offer to restart verification
+
+---
+
+## 🆔 Okta ID Integration
+
+### Overview
+
+v2.0.11 introduces optional Okta ID collection during the verification flow. This allows you to link ArtiusID verification with Okta accounts.
+
+### Enabling Okta ID Collection
+
+```swift
+// Enable Okta ID collection (default: true)
+ArtiusIDSDKWrapper.shared.configure(
+    environment: .sandbox,
+    baseURL: "https://sandbox.mobile.artiusid.dev",
+    registrationDomain: "sandbox.registration.artiusid.dev",
+    includeOktaIDInVerificationPayload: true,  // ✅ Enable Okta ID
+    logLevel: .debug
+)
+```
+
+### Disabling Okta ID Collection
+
+```swift
+// Disable Okta ID collection
+ArtiusIDSDKWrapper.shared.configure(
+    environment: .production,
+    baseURL: "https://service-mobile.artiusid.dev",
+    registrationDomain: "service-registration.artiusid.dev",
+    includeOktaIDInVerificationPayload: false,  // ❌ Disable Okta ID
+    logLevel: .warning
+)
+```
+
+### Verification Flow with Okta ID
+
+When enabled, the flow includes an Okta ID collection step:
+
+```
+1. Face Scan (Live Selfie)
+      ↓
+2. Document Scan (Passport or State ID)
+      ↓
+3. Okta ID Entry (if enabled)
+      ↓
+4. Processing & Verification
+      ↓
+5. Results
+```
+
+### Handling Okta ID in Results
+
+```swift
+func handleVerificationResult(_ result: VerificationResult) {
+    if result.isSuccessful {
+        print("✅ Verification successful!")
+        
+        // Check for Okta ID (v2.0.11+)
+        if let oktaId = result.oktaId, !oktaId.isEmpty {
+            print("   Okta ID: \(oktaId)")
+            
+            // Link Okta account with ArtiusID verification
+            linkOktaAccount(
+                oktaId: oktaId,
+                accountNumber: result.accountNumber,
+                fullName: result.fullName
+            )
+        } else {
+            print("   Okta ID: Not collected")
+        }
+    }
+}
+
+func linkOktaAccount(oktaId: String, accountNumber: String?, fullName: String?) {
+    // TODO: Implement your Okta account linking logic
+    print("🔗 Linking Okta account:")
+    print("   Okta ID: \(oktaId)")
+    print("   ArtiusID Account: \(accountNumber ?? "N/A")")
+    print("   Name: \(fullName ?? "N/A")")
+    
+    // Example: Send to your backend
+    // POST /api/link-okta
+    // Body: { "oktaId": "...", "artiusAccountNumber": "..." }
+}
+```
+
+### Dynamic Okta ID Toggle
+
+For apps that allow users to enable/disable Okta ID collection:
+
+```swift
+class AppSettings: ObservableObject {
+    @Published var oktaIdEnabled: Bool = true {
+        didSet {
+            reconfigureSDK()
+        }
+    }
+    
+    func reconfigureSDK() {
+        ArtiusIDSDKWrapper.shared.configure(
+            environment: .sandbox,
+            baseURL: "https://sandbox.mobile.artiusid.dev",
+            registrationDomain: "sandbox.registration.artiusid.dev",
+            includeOktaIDInVerificationPayload: oktaIdEnabled,
+            logLevel: .debug
+        )
+        print("✅ Okta ID collection: \(oktaIdEnabled ? "enabled" : "disabled")")
+    }
+}
+
+// Usage in UI
+struct SettingsView: View {
+    @StateObject var settings = AppSettings()
+    
+    var body: some View {
+        Form {
+            Section("Okta Integration") {
+                Toggle("Collect Okta ID", isOn: $settings.oktaIdEnabled)
+                    .onChange(of: settings.oktaIdEnabled) { _ in
+                        // SDK reconfigures automatically via didSet
+                    }
+            }
+        }
+    }
+}
+```
+
+---
+
+## 🎨 Theming & Customization
+
+### Basic Theme Configuration
+
+```swift
+import ArtiusIDSDK
+
+let theme = EnhancedSDKThemeConfiguration(
+    colorScheme: SDKColorScheme(
+        primaryColorHex: "#007AFF",
+        secondaryColorHex: "#FF9500",
+        backgroundColorHex: "#FFFFFF",
+        textColorHex: "#000000",
+        primaryButtonColorHex: "#007AFF",
+        secondaryButtonColorHex: "#8E8E93"
+    ),
+    typography: SDKTypography(
+        titleFont: "System Bold",
+        titleSize: 28,
+        bodyFont: "System Regular",
+        bodySize: 16,
+        buttonFont: "System Semibold",
+        buttonSize: 17
+    ),
+    brandName: "Your Company Name",
+    brandLogoName: "your_logo"  // Asset name in your bundle
+)
+
+// Apply theme (typically in app initialization)
+ThemeManager.shared.initialize(theme: theme, configuration: sdkConfig)
+```
+
+### Icon Theming (v2.0.11)
+
+Face scan instruction icons now use the `secondaryColor` for better visual hierarchy:
+
+```swift
+let colorScheme = SDKColorScheme(
+    primaryColorHex: "#007AFF",      // Primary buttons, main actions
+    secondaryColorHex: "#FF9500",    // ✅ Face scan instruction icons
+    backgroundColorHex: "#FFFFFF",
+    textColorHex: "#000000"
+)
+```
+
+### Image Overrides
 
 Replace SDK images with your own:
 
 ```swift
-let imageOverrides = SDKImageOverrides(
-    loadingStrategy: .assets,
-    welcomeLogo: "your_logo",           // From Assets.xcassets
-    welcomeBackground: "your_background",
-    customOverrides: [
-        "success_icon": "custom_success",
-        "error_icon": "custom_error"
-    ]
-)
-
-ArtiusIDSDK.shared.updateImageOverrides(imageOverrides)
-```
-
-### **Text Localization**
-
-Override SDK text strings:
-
-```swift
-let customText = [
-    "welcome_title": "Welcome to SecureBank",
-    "welcome_subtitle": "Fast and secure identity verification",
-    "verify_document_title": "Scan Your ID",
-    "face_scan_title": "Face Verification"
+let imageOverrides: [String: String] = [
+    "face_scan_frame": "custom_face_frame",
+    "document_frame": "custom_doc_frame",
+    "success_icon": "custom_success",
+    // ... more overrides
 ]
 
-ArtiusIDSDK.shared.updateLocalizations(customText, for: "en")
+// Apply overrides
+ImageOverrideManager.shared.setOverrides(imageOverrides)
+```
+
+### Localization
+
+Override default strings:
+
+```swift
+let localizationOverrides: [String: String] = [
+    "face_scan_title": "Take Your Selfie",
+    "document_scan_title": "Scan Your ID",
+    "okta_id_viewTitle": "Enter Company ID",
+    // ... more overrides
+]
+
+LocalizationManager.shared.setOverrides(localizationOverrides)
 ```
 
 ---
 
-## 📱 Sample Application
+## ✅ Best Practices
 
-A complete reference implementation is included in the `sample-app/` directory, demonstrating:
-
-- ✅ **5 Complete Theme Examples** (Corporate, Banking, FinTech, etc.)
-- ✅ **Image Override Strategies** (Asset-based, URL-based, Hybrid)
-- ✅ **Multi-Language Support** (English, Spanish, French)
-- ✅ **Environment Switching** (Sandbox, UAT, Production)
-- ✅ **FCM Integration** for approval notifications
-- ✅ **Biometric Authentication** (Face ID/Touch ID)
-
-### **Running the Sample App**
-
-1. Open `artiusid-sdk-ios.xcodeproj`
-2. Select the **ArtiusIDSampleApp** scheme
-3. Choose a simulator or device
-4. Click **Run** (⌘R)
-
-See `sample-app/README.md` for detailed documentation.
-
----
-
-## 🔐 Features
-
-### **Identity Verification**
-- Document scanning (Driver's License, State ID, Passport)
-- Face verification with liveness detection
-- NFC passport chip reading
-- Background checks and identity validation
-
-### **Biometric Authentication**
-- Face ID / Touch ID integration
-- Secure approval workflows
-- Multi-factor authentication support
-
-### **Firebase Cloud Messaging**
-- Push notification support for approvals
-- Real-time status updates
-- Secure notification handling
-
-### **Security**
-- End-to-end encryption
-- Certificate pinning
-- Mutual TLS (mTLS) authentication
-- Keychain storage for sensitive data
-
----
-
-## 🌍 Environments
-
-The SDK supports three environments:
-
-| Environment | Purpose | URL |
-|-------------|---------|-----|
-| **Sandbox** | Development & Testing | `sandbox.mobile.artiusid.dev` |
-| **UAT** | User Acceptance Testing | `service-mobile.stage.artiusid.dev` |
-| **Production** | Live Production | `service-mobile.artiusid.dev` |
+### 1. Always Check Recapture First
 
 ```swift
-// Development
-ArtiusIDSDK.shared.initialize(
-    clientId: YOUR_CLIENT_ID,
-    clientGroupId: YOUR_CLIENT_GROUP_ID,
-    environment: .sandbox
-)
+// ✅ CORRECT ORDER
+func handleVerificationResult(_ result: VerificationResult) {
+    if result.requiresRecapture {
+        handleRecapture(result)
+    } else if result.isSuccessful {
+        handleSuccess(result)
+    } else {
+        handleFailure(result)
+    }
+}
 
-// Production
-ArtiusIDSDK.shared.initialize(
-    clientId: YOUR_CLIENT_ID,
-    clientGroupId: YOUR_CLIENT_GROUP_ID,
-    environment: .production
+// ❌ WRONG ORDER
+func handleVerificationResult(_ result: VerificationResult) {
+    if result.isSuccessful {
+        handleSuccess(result)
+    } else {
+        // This treats recapture as permanent failure!
+        handleFailure(result)
+    }
+}
+```
+
+### 2. Store Account Numbers for Authentication
+
+```swift
+func handleVerificationResult(_ result: VerificationResult) {
+    if result.isSuccessful, let accountNumber = result.accountNumber {
+        // Store for future authentication
+        UserDefaults.standard.set(accountNumber, forKey: "artiusid_account_number")
+        
+        // Or use Keychain for better security
+        KeychainHelper.standard["artiusid_account"] = accountNumber
+    }
+}
+```
+
+### 3. Handle Okta ID Appropriately
+
+```swift
+func handleVerificationResult(_ result: VerificationResult) {
+    if result.isSuccessful {
+        // Only process Okta ID if it was actually collected
+        if let oktaId = result.oktaId, !oktaId.isEmpty {
+            linkOktaAccount(oktaId, accountNumber: result.accountNumber)
+        }
+    }
+}
+```
+
+### 4. Use Environment-Specific Configuration
+
+```swift
+#if DEBUG
+let environment = Environments.sandbox
+let logLevel = LogLevel.debug
+#else
+let environment = Environments.production
+let logLevel = LogLevel.warning
+#endif
+
+ArtiusIDSDKWrapper.shared.configure(
+    environment: environment,
+    baseURL: environment.baseURL,
+    registrationDomain: environment.registrationDomain,
+    logLevel: logLevel
 )
 ```
 
----
-
-## 📋 Requirements
-
-### **Minimum Requirements**
-- iOS 14.0+
-- Xcode 15.0+
-- Swift 5.9+
-
-### **Required Capabilities**
-- Camera access (for document/face scanning)
-- NFC capability (for passport reading)
-- Face ID/Touch ID (for biometric auth)
-- Network access (for API communication)
-
-### **Optional**
-- Firebase Cloud Messaging (for push notifications)
-
----
-
-## 🔧 Configuration
-
-### **Client Credentials**
-
-Contact ArtiusID support to obtain:
-- `clientId` - Your unique client identifier
-- `clientGroupId` - Your organization group ID
-- Environment-specific API keys
-
-### **Firebase Setup (Optional)**
-
-For push notification support:
-
-1. Add `GoogleService-Info.plist` to your project
-2. Initialize Firebase in your app delegate
-3. Configure FCM in the SDK
+### 5. Log Important Events
 
 ```swift
-import FirebaseCore
-import FirebaseMessaging
+func handleVerificationResult(_ result: VerificationResult) {
+    // Log verification outcome
+    Analytics.log("verification_complete", parameters: [
+        "success": result.isSuccessful,
+        "requires_recapture": result.requiresRecapture,
+        "has_okta_id": result.oktaId != nil,
+        "score": result.verificationScore
+    ])
+    
+    if result.requiresRecapture {
+        Analytics.log("verification_recapture_required", parameters: [
+            "type": result.recaptureType?.title ?? "unknown"
+        ])
+    }
+}
+```
 
-func application(_ application: UIApplication,
-                didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-    FirebaseApp.configure()
-    return true
+### 6. Provide Clear Error Messages
+
+```swift
+func handleVerificationResult(_ result: VerificationResult) {
+    if result.requiresRecapture, let recaptureType = result.recaptureType {
+        showAlert(
+            title: recaptureType.title,
+            message: """
+            \(recaptureType.message)
+            
+            This error is recoverable. You can restart verification to try again.
+            
+            Tips:
+            • Ensure good lighting
+            • Hold device steady
+            • Keep document flat and fully visible
+            """
+        )
+    } else if !result.isSuccessful {
+        showAlert(
+            title: "Verification Failed",
+            message: """
+            \(result.errorMessage ?? "Unable to verify identity")
+            
+            Please try again or contact support if the problem persists.
+            """
+        )
+    }
 }
 ```
 
@@ -350,106 +998,302 @@ func application(_ application: UIApplication,
 
 ## 🐛 Troubleshooting
 
-### **Common Issues**
+### Issue: SDK not initializing
 
-#### **"Module 'ArtiusIDSDK' not found"**
-- Ensure package is added to your target
-- Clean build folder: Product → Clean Build Folder (⇧⌘K)
-- Reset package cache: File → Packages → Reset Package Caches
+**Symptoms:** App crashes or SDK features don't work
 
-#### **Camera/NFC Permission Denied**
-- Check Info.plist has required usage descriptions
-- Verify app has proper entitlements
-- Request permissions at appropriate time
+**Solution:**
+```swift
+// Verify SDK is configured before use
+print("SDK Version: \(ArtiusIDSDKInfo.version)")
+print("Environment: \(ArtiusIDSDK.shared.environment)")
+print("Base URL: \(ArtiusIDSDK.shared.baseURL)")
 
-#### **Certificate Errors**
-- Ensure device has internet connection
-- Check environment configuration
-- Verify client credentials are correct
+// Ensure configure() is called in app initialization
+// BEFORE using any SDK views
+```
 
-#### **Build Errors**
-- Minimum iOS deployment target: 14.0
-- Ensure Xcode 15.0+ is installed
-- Check Swift version: 5.9+
+### Issue: Error 601 not showing recapture screen
 
----
+**Cause:** Not checking `requiresRecapture` field
 
-## 📚 Additional Resources
+**Solution:**
+```swift
+// Always check requiresRecapture FIRST
+if result.requiresRecapture {
+    // Handle recapture
+} else if result.isSuccessful {
+    // Handle success
+} else {
+    // Handle permanent failure
+}
+```
 
-### **Documentation**
-- API Reference: See `sample-app/` for code examples
-- Integration Guide: `sample-app/INTEGRATION-GUIDE.md`
-- Theme Customization: `sample-app/Theme/SampleAppThemes.swift`
+### Issue: Okta ID is nil even when enabled
 
-### **Sample Implementations**
-- Basic verification flow: `sample-app/Views/SampleAppView.swift`
-- Custom theming: `sample-app/Theme/`
-- Image overrides: `sample-app/Config/SampleImageOverrides.swift`
-- Localization: `sample-app/Config/SampleLocalizations.swift`
+**Causes:**
+1. Feature disabled in configuration
+2. User skipped Okta ID entry
+3. Result not properly checked
 
----
+**Solution:**
+```swift
+// Verify configuration
+print("Okta ID Enabled: \(ArtiusIDSDK.shared.includeOktaIDInVerificationPayload)")
 
-## 💬 Support
+// Check result properly
+if let oktaId = result.oktaId, !oktaId.isEmpty {
+    print("Okta ID collected: \(oktaId)")
+} else {
+    print("Okta ID not collected")
+    // This is normal if feature is disabled or user didn't provide it
+}
+```
 
-### **Technical Support**
-- **Email:** support@artiusid.dev
-- **Response Time:** 24-48 hours for standard inquiries
+### Issue: Certificate errors
 
-### **Before Contacting Support**
-Please have ready:
-- SDK version number
-- iOS version and device model
-- Xcode version
-- Error messages or logs
-- Steps to reproduce the issue
+**Symptoms:** Network requests fail with SSL/TLS errors
 
-### **Reporting Issues**
-Include:
-1. Detailed description of the problem
-2. Expected vs actual behavior
-3. Code snippet demonstrating the issue
-4. Console logs (if applicable)
-5. Screenshots or screen recordings
+**Solution:**
+```swift
+// Verify certificate is registered
+// Certificate registration happens automatically on first SDK use
+// Check logs for:
+// "[CertificateManager] Certificate stored successfully"
 
----
+// If issues persist, clear and regenerate:
+try? CertificateManager.shared.removeCertificate()
+CertificateManager.shared.generateCertificate()
+```
 
-## 📄 License
+### Issue: Wrong environment URLs
 
-Proprietary software. All rights reserved by ArtiusID, Inc.
+**Solution:**
+```swift
+// Verify URLs after configuration
+print("🔍 SDK Configuration:")
+print("   Environment: \(ArtiusIDSDK.shared.environment)")
+print("   Base URL: \(ArtiusIDSDK.shared.baseURL)")
+print("   Expected: \(expectedBaseURL)")
 
-Usage requires a valid license agreement. Contact sales@artiusid.dev for licensing information.
+// Make sure you're using the correct environment constants
+```
 
----
+### Debug Logging
 
-## 🔄 Version History
-
-### Latest Release
-See [GitHub Releases](https://github.com/artius-iD/sdk/releases) for version history and changelogs.
-
-### Checking SDK Version
+Enable verbose logging to diagnose issues:
 
 ```swift
-let version = ArtiusIDSDK.version
-print("SDK Version: \(version)")
+ArtiusIDSDKWrapper.shared.configure(
+    environment: .sandbox,
+    baseURL: "https://sandbox.mobile.artiusid.dev",
+    registrationDomain: "sandbox.registration.artiusid.dev",
+    logLevel: .debug  // ✅ Enable all logs
+)
+
+// Look for logs like:
+// ✅ VerificationResponse: Detected recapture-able error 601
+// 📋 DocumentRecaptureNotificationView: Screen appeared
+// 🔄 ArtiusIDVerificationView: User tapped recapture button
 ```
 
 ---
 
-## ⚡ Quick Integration Checklist
+## 📚 API Reference
 
-- [ ] Add SDK package to Xcode project
-- [ ] Configure Info.plist permissions (Camera, Face ID, NFC)
-- [ ] Initialize SDK with credentials
-- [ ] Test verification flow in Sandbox
-- [ ] Customize theme (optional)
-- [ ] Add localization (optional)
-- [ ] Configure Firebase for notifications (optional)
-- [ ] Test on physical device
-- [ ] Migrate to Production environment
+### ArtiusIDSDKWrapper
+
+Main SDK entry point.
+
+```swift
+public class ArtiusIDSDKWrapper {
+    public static let shared: ArtiusIDSDKWrapper
+    
+    public func configure(
+        environment: Environments,
+        baseURL: String,
+        registrationDomain: String,
+        includeOktaIDInVerificationPayload: Bool = true,
+        logLevel: LogLevel = .info
+    )
+    
+    public func updateFCMToken(_ token: String)
+}
+```
+
+### ArtiusIDSDKInfo
+
+SDK version information.
+
+```swift
+public struct ArtiusIDSDKInfo {
+    public static let version: String              // "2.0.11"
+    public static let wrapperVersion: String       // "2.0.11"
+    public static let build: String
+    public static let architecture: String
+    
+    public static func printInfo()
+}
+```
+
+### Environments
+
+```swift
+public enum Environments: String {
+    case sandbox        // "sandbox"
+    case development    // "development"
+    case staging        // "staging"
+    case production     // "production"
+    case qa             // "qa"
+    
+    // Backward compatibility
+    case Sandbox        // "sandbox-env"
+    case Development    // "dev"
+    case Staging        // "stage"
+    case Production     // "prod"
+    case QA             // "qa-env"
+}
+```
+
+### LogLevel
+
+```swift
+public enum LogLevel {
+    case debug      // All logs (verbose)
+    case info       // Informational logs
+    case warning    // Warning and error logs
+    case error      // Error logs only
+}
+```
+
+### ArtiusIDVerificationView
+
+Main verification view.
+
+```swift
+public struct ArtiusIDVerificationView: View {
+    public struct Configuration {
+        public let clientId: Int
+        public let clientGroupId: Int?
+        public let environment: Environments
+        
+        public init(
+            clientId: Int,
+            clientGroupId: Int? = nil,
+            environment: Environments
+        )
+    }
+    
+    public init(
+        configuration: Configuration,
+        onCompletion: @escaping (VerificationResult) -> Void,
+        onCancel: @escaping () -> Void
+    )
+}
+```
+
+### ArtiusIDAuthenticationView
+
+Biometric authentication view.
+
+```swift
+public struct ArtiusIDAuthenticationView: View {
+    public init(
+        clientId: Int,
+        accountNumber: String,
+        onCompletion: @escaping (AuthenticationResult) -> Void,
+        onCancel: @escaping () -> Void
+    )
+}
+```
+
+### VerificationResult
+
+```swift
+public struct VerificationResult {
+    public let isSuccessful: Bool
+    public let verificationScore: Double
+    public let accountNumber: String?
+    public let fullName: String?
+    public let errorMessage: String?
+    public let errorCode: Int?
+    public let requiresRecapture: Bool              // v2.0.6+
+    public let recaptureType: DocumentRecaptureType? // v2.0.6+
+    public let oktaId: String?                      // v2.0.11+
+    // ... additional fields
+}
+```
+
+### DocumentRecaptureType
+
+```swift
+public enum DocumentRecaptureType {
+    case passportMRZError
+    case passportOCRError
+    case stateIdFrontError
+    case stateIdBackError
+    case stateIdBarcodeError
+    case imageQualityError
+    case nfcTimeoutError
+    case generalAPIError
+    
+    public var title: String
+    public var message: String
+    public var actionText: String
+}
+```
 
 ---
 
-**Need Help?** Email support@artiusid.dev or check the `sample-app/` directory for working examples.
+## 📧 Support
 
-**Ready for Production?** Contact our team to obtain production credentials and complete your integration review.
+### SDK Information
+
+- **Version:** v2.0.12
+- **Release Date:** November 14, 2025
+- **Status:** ✅ Production Ready
+
+### Resources
+
+- **GitHub Repository:** https://github.com/artius-iD/sdk
+- **GitLab Repository:** https://gitlab.com/artiusid1/mobile-sdk-ios
+- **Documentation:** See repository README and guides
+- **Sample App:** `/ArtiusIDSampleApp` in repository
+
+### Contact
+
+- **Email:** sdk-support@artiusid.com
+- **Issues:** Create an issue on GitHub/GitLab
+
+---
+
+## 📝 Changelog
+
+### v2.0.11 (November 14, 2025)
+
+- ✅ Added Okta ID integration with configurable flag
+- ✅ Enhanced theming for face scan instruction icons
+- ✅ Certificate loading improvements
+- ✅ Various UI and stability improvements
+
+### v2.0.6 (November 13, 2025)
+
+- ✅ Added document recapture for errors 600-604
+- ✅ Added `requiresRecapture` and `recaptureType` to VerificationResult
+- ✅ Added DocumentRecaptureNotificationView
+- ✅ Improved error handling and user experience
+
+### v2.0.4 (November 12, 2025)
+
+- ✅ Added explicit base URL configuration
+- ✅ Removed automatic URL construction
+- ✅ Added `baseURL` and `registrationDomain` parameters
+
+---
+
+**Thank you for using ArtiusID! 🙏**
+
+For additional help, please refer to the sample app or contact our support team.
+
+*Last Updated: November 14, 2025*
 

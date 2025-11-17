@@ -16,6 +16,132 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.13] - 2024-11-17
+
+### Changed
+- **Navigation Back Button Redesign**: Complete UI overhaul for cleaner integration
+  - Removed `CustomBackButtonView` component usage (component still exists for compatibility)
+  - Back button now directly embedded in each view's layout
+  - Removed all container styling: frame constraints, backgrounds, separator lines
+  - Simplified to HStack with padding only (horizontal: 20pt, top: 16pt, bottom: 20pt)
+  - No visual "outline" or "container" effect
+  - Back button icon and text use `secondaryColor` for automatic theming
+  
+- **Navigation Bar Hiding Improvements**: Enhanced iOS 16+ compatibility
+  - Added `.toolbar(.hidden, for: .navigationBar)` to all SDK views
+  - Ensures complete hiding of system navigation bar on iOS 13-16+
+  - No system UI overlays on any screen
+
+### Fixed
+- Navigation back button no longer shows system navigation bar overlay
+- Back button appears cleanly without visual container on all iOS versions
+- Consistent back button positioning and spacing across all SDK screens
+
+### Technical Details
+- Updated 10 SDK views with new back button implementation:
+  - VerificationSteps, FaceScanIntroView, FaceScanView, FaceScanRetryView
+  - ScanIDIntroView, ScanIDFrontView, ScanIDBackView, ScanIDBackIntroView
+  - SelectDocumentTypeView, CollectOktaIDView
+- Zero API changes - fully backward compatible
+- No client code changes required
+
+### Migration
+- **No code changes required** - drop-in replacement
+- Back button automatically themes with existing `secondaryColor` configuration
+- Clean build recommended after update
+
+---
+
+## [2.0.12] - 2024-11-14
+
+### Added
+- **Okta ID Integration**: Optional Okta ID collection during verification flow
+  - New `includeOktaIDInVerificationPayload` configuration parameter (default: true)
+  - `CollectOktaIDView` for user input
+  - Okta ID field added to `VerificationResult`
+  - Conditionally included in verification API payload based on flag
+  - Seamless integration into verification workflow between document scan and processing
+
+- **Document Recapture (v2.0.6)**: Automatic retry for recoverable document errors
+  - Error codes 600-604 now trigger recapture screens instead of permanent failure
+  - `DocumentRecaptureType` enum with specific error types
+  - `DocumentRecaptureNotificationView` with user-friendly instructions
+  - New fields in `VerificationResult`: `requiresRecapture` and `recaptureType`
+  - Automatic navigation back to appropriate scan screen for retry
+  - Previous scan data cleared on recapture
+
+- **Explicit Base URL Configuration (v2.0.4)**: Complete control over API endpoints
+  - `baseURL` parameter (required) for mobile services
+  - `registrationDomain` parameter (required) for certificate registration
+  - No automatic URL construction - clients specify exact endpoints
+  - Support for custom domains and proxy configurations
+
+- **Certificate Management Improvements**:
+  - Fixed certificate reloading from keychain on home page display
+  - Proper environment-to-SDK enum mapping for certificate keys
+  - Environment-specific certificate storage with correct rawValues
+
+### Changed
+- **SDK Configuration API**: Breaking change - new required parameters
+  ```swift
+  // Old (v2.0.5)
+  configure(environment:, urlTemplate:, mobileDomain:, registrationUrlTemplate:, registrationDomain:)
+  
+  // New (v2.0.11)
+  configure(environment:, baseURL:, registrationDomain:, includeOktaIDInVerificationPayload:, logLevel:)
+  ```
+
+- **Face Scan Instruction Icons**: Now use `secondaryColor` from theme for better visual hierarchy
+  - Changed from background/text colors to themeable secondary color
+  - Improved theming consistency across SDK
+
+- **Verification Flow**: Added conditional Okta ID collection step
+  - Face Scan → Document Scan → Okta ID (if enabled) → Processing → Completion
+  - Fully backward compatible when Okta ID collection is disabled
+
+- **Error Handling**: Improved handling of recoverable vs. permanent errors
+  - Clients must check `requiresRecapture` before checking `isSuccessful`
+  - Better user experience for document scanning errors
+
+- **VerificationSteps View**: Conditionally displays "Okta ID" step based on configuration flag
+
+### Fixed
+- **Certificate Loading**: Fixed certificate not being reloaded from keychain
+  - Was using display name (e.g., "sandbox") instead of SDK enum rawValue (e.g., "sandbox-env")
+  - Added `mapToSDKEnvironment()` helper function
+  - Certificate now properly reloads on home page display
+
+- **Sample App UI**: Removed unnecessary elements
+  - Removed settings wheel from home page
+  - Removed "Test Camera Sounds" button
+  - Added Okta ID configuration dropdown (enable/disable)
+
+- **Build Configuration**: Removed hardcoded development team IDs from project file
+  - Allows any developer to build without code signing errors
+  - Xcode now automatically manages signing
+
+### Documentation
+- **CLIENT_IMPLEMENTATION_GUIDE.md**: Comprehensive implementation guide for v2.0.11
+  - Complete feature documentation (Okta ID, document recapture, theming)
+  - Full API reference
+  - Best practices and troubleshooting
+  - Migration guidance from previous versions
+
+- **Documentation Cleanup**: Removed 20+ obsolete/internal documentation files
+  - Consolidated all client-facing documentation into single guide
+  - Removed version-specific migration guides
+  - Removed internal implementation summaries
+
+### Breaking Changes
+- `baseURL` parameter now required (was `urlTemplate`)
+- `registrationDomain` parameter now required (no template system)
+- Removed template-based URL construction (use explicit URLs)
+
+### Migration from v2.0.5
+See [CLIENT_IMPLEMENTATION_GUIDE.md](CLIENT_IMPLEMENTATION_GUIDE.md) for complete migration guide.
+
+---
+
 ## [2.0.5] - 2025-11-12
 
 ### Added
