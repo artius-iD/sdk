@@ -16,43 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [2.0.13] - 2024-11-17
-
-### Changed
-- **Navigation Back Button Redesign**: Complete UI overhaul for cleaner integration
-  - Removed `CustomBackButtonView` component usage (component still exists for compatibility)
-  - Back button now directly embedded in each view's layout
-  - Removed all container styling: frame constraints, backgrounds, separator lines
-  - Simplified to HStack with padding only (horizontal: 20pt, top: 16pt, bottom: 20pt)
-  - No visual "outline" or "container" effect
-  - Back button icon and text use `secondaryColor` for automatic theming
-  
-- **Navigation Bar Hiding Improvements**: Enhanced iOS 16+ compatibility
-  - Added `.toolbar(.hidden, for: .navigationBar)` to all SDK views
-  - Ensures complete hiding of system navigation bar on iOS 13-16+
-  - No system UI overlays on any screen
-
-### Fixed
-- Navigation back button no longer shows system navigation bar overlay
-- Back button appears cleanly without visual container on all iOS versions
-- Consistent back button positioning and spacing across all SDK screens
-
-### Technical Details
-- Updated 10 SDK views with new back button implementation:
-  - VerificationSteps, FaceScanIntroView, FaceScanView, FaceScanRetryView
-  - ScanIDIntroView, ScanIDFrontView, ScanIDBackView, ScanIDBackIntroView
-  - SelectDocumentTypeView, CollectOktaIDView
-- Zero API changes - fully backward compatible
-- No client code changes required
-
-### Migration
-- **No code changes required** - drop-in replacement
-- Back button automatically themes with existing `secondaryColor` configuration
-- Clean build recommended after update
-
----
-
-## [2.0.12] - 2024-11-14
+## [2.0.12] - 2025-11-14
 
 ### Added
 - **Okta ID Integration**: Optional Okta ID collection during verification flow
