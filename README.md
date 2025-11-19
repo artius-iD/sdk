@@ -1,7 +1,7 @@
 # ArtiusID iOS SDK - Client Implementation Guide
 
-**SDK Version:** v2.0.12  
-**Date:** November 14, 2025  
+**SDK Version:** v2.0.15  
+**Date:** November 19, 2025  
 **Target Audience:** Client Application Developers  
 **Status:** ✅ Production Ready
 
@@ -27,7 +27,7 @@
 
 ## 📖 Overview
 
-The ArtiusID iOS SDK provides a complete identity verification and authentication solution for iOS applications. This guide covers all features available in v2.0.11.
+The ArtiusID iOS SDK provides a complete identity verification and authentication solution for iOS applications. This guide covers all features available in v2.0.15.
 
 ### Key Features
 
@@ -58,14 +58,14 @@ The ArtiusID iOS SDK provides a complete identity verification and authenticatio
    ```
    https://github.com/artius-iD/sdk.git
    ```
-3. Select version `2.0.11` or "Up to Next Major Version" from `2.0.11`
+3. Select version `2.0.15` or "Up to Next Major Version" from `2.0.15`
 4. Click **Add Package**
 
 ### Package.swift
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/artius-iD/sdk.git", from: "2.0.12")
+    .package(url: "https://github.com/artius-iD/sdk.git", from: "2.0.15")
 ]
 ```
 
@@ -1050,21 +1050,41 @@ if let oktaId = result.oktaId, !oktaId.isEmpty {
 }
 ```
 
-### Issue: Certificate errors
+### Issue: Certificate errors / mTLS failures
 
-**Symptoms:** Network requests fail with SSL/TLS errors
+**Symptoms:** 
+- Network requests fail with `-1206` (server requires client certificate)
+- Error `-25300` (errSecItemNotFound) when loading private key
+- Error `-999` (cancelled) with "No client identity available"
 
-**Solution:**
+**Root Causes:**
+- Certificate and private key not properly linked in keychain
+- Environment mismatch between certificate and API call
+- Old certificate format from previous SDK versions
+
+**Solution (v2.0.15+):**
 ```swift
-// Verify certificate is registered
-// Certificate registration happens automatically on first SDK use
-// Check logs for:
-// "[CertificateManager] Certificate stored successfully"
+// The SDK now automatically handles certificate linkage using kSecAttrLabel
+// If you experience issues, clear credentials and regenerate:
 
-// If issues persist, clear and regenerate:
+// 1. Clear all credentials for the environment
 try? CertificateManager.shared.removeCertificate()
-CertificateManager.shared.generateCertificate()
+// This removes BOTH certificate and private key
+
+// 2. Regenerate certificate on next verification/authentication
+// Certificate will be automatically regenerated with proper linkage
+
+// 3. Verify in logs:
+// "✅ Certificate and private key stored successfully"
+// "✅ Successfully found existing identity for environment"
+// "🔐 mTLS READY - Client certificate loaded"
 ```
+
+**Note:** v2.0.15 includes significant improvements to certificate management:
+- Environment-specific certificate storage
+- Proper SecIdentity formation via kSecAttrLabel linkage
+- Comprehensive logging for troubleshooting
+- Automatic certificate reload after generation
 
 ### Issue: Wrong environment URLs
 
@@ -1127,8 +1147,8 @@ SDK version information.
 
 ```swift
 public struct ArtiusIDSDKInfo {
-    public static let version: String              // "2.0.11"
-    public static let wrapperVersion: String       // "2.0.11"
+    public static let version: String              // "2.0.15"
+    public static let wrapperVersion: String       // "2.0.15"
     public static let build: String
     public static let architecture: String
     
@@ -1249,8 +1269,8 @@ public enum DocumentRecaptureType {
 
 ### SDK Information
 
-- **Version:** v2.0.12
-- **Release Date:** November 14, 2025
+- **Version:** v2.0.15
+- **Release Date:** November 19, 2025
 - **Status:** ✅ Production Ready
 
 ### Resources
@@ -1268,6 +1288,26 @@ public enum DocumentRecaptureType {
 ---
 
 ## 📝 Changelog
+
+### v2.0.15 (November 19, 2025)
+
+**Critical mTLS Certificate Management Improvements:**
+- ✅ Fixed SecIdentity formation by properly linking certificate and private key using kSecAttrLabel
+- ✅ Environment-specific certificate and private key storage
+- ✅ Automatic certificate reload after generation for immediate mTLS availability
+- ✅ Comprehensive logging for certificate generation, storage, and mTLS handshake
+- ✅ Enhanced clearCredentials to remove all certificate formats (backward compatibility)
+
+**UI/UX Improvements:**
+- ✅ Updated NFC passport instruction text ("HOLD PHONE AGAINST PASSPORT" instead of "PASSPORT COVER")
+- ✅ Fixed certificate status display on home screen refresh
+- ✅ Authentication request flow styling improvements
+
+**Technical Details:**
+- Certificate and private key now share the same `kSecAttrLabel` for proper identity formation
+- `TLSSessionManager` now tracks loaded environment to prevent mismatch errors
+- `VerificationResponse` now forces certificate reload after generation
+- All keychain operations use environment-specific keys for multi-environment support
 
 ### v2.0.11 (November 14, 2025)
 
@@ -1295,5 +1335,5 @@ public enum DocumentRecaptureType {
 
 For additional help, please refer to the sample app or contact our support team.
 
-*Last Updated: November 14, 2025*
+*Last Updated: November 19, 2025*
 
