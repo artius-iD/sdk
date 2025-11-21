@@ -16,6 +16,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.16] - 2025-11-21
+
+### Fixed
+- **Government ID Scan Intro Views Layout**: Fixed horizontal centering issues
+  - `ScanIDIntroView`: Refactored layout to use ScrollView with proper padding
+  - `ScanIDBackIntroView`: Refactored layout to use ScrollView with proper padding
+  - Content (GIF, text, table) now properly centered on all device sizes
+  - Removed asymmetric padding that caused right-shift appearance
+  - Fixed back button positioning with large fixed padding (45pt leading)
+  - Grid header now spans both columns correctly
+  - Consistent spacing between all content elements
+
+### Technical Details
+- Changed from VStack with Spacers to ScrollView-based layout
+- Used `.frame(maxWidth: .infinity)` for proper horizontal centering
+- Applied `.gridCellColumns(2)` to tips header for proper spanning
+- Standardized padding values: leading 45pt, trailing 20pt, top 50pt
+- Maintained responsive sizing with `getRelativeWidth()` and `getRelativeHeight()`
+
+---
+
 ## [2.0.13] - 2024-11-17
 
 ### Changed
