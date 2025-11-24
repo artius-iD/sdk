@@ -16,6 +16,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.18] - 2025-11-24
+
+### Fixed
+- **CRITICAL: NFC Session Resource Leak**: Fixed Swift continuation leak in passport NFC scanning
+  - Added `PassportReader.cancelScan()` method to properly invalidate NFC session
+  - Timeout handler now calls `cancelScan()` to release NFC hardware resources
+  - Fixes "System resource unavailable" error (NFCError Code=203) on retry attempts
+  - Fixes "SWIFT TASK CONTINUATION MISUSE" error that could cause app instability
+  - Increased retry delay from 1.0s to 1.5s for proper hardware release between attempts
+
+### Technical Details
+- Modified `PassportReader.swift`: Added public `cancelScan()` method
+  - Invalidates `NFCTagReaderSession` with error message
+  - Resumes pending continuation with `UserCanceled` error
+  - Cleans up `nfcContinuation` to prevent leaks
+- Modified `ScanChipView.swift`: Timeout handler now properly cleans up NFC session
+  - Calls `passportReader.cancelScan()` before retry
+  - Ensures NFC hardware is available for subsequent attempts
+
+### Impact
+- **All passport verification flows**: This is a critical fix for any client using passport NFC scanning
+- **No breaking changes**: Drop-in replacement, no API changes
+- **Immediate deployment recommended**: Prevents app instability and failed NFC scans
+
+---
+
 ## [2.0.17] - 2025-11-24
 
 ### Added
