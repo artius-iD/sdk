@@ -16,6 +16,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.17] - 2025-11-24
+
+### Added
+- **Re-verification Support**: Added `accountNumber` parameter to `VerificationRequest`
+  - If a member ID exists in keychain from previous verification, it's automatically included
+  - Enables re-verification flow for existing users
+  - Uses environment-specific keychain key: `verification-{environment}`
+
+### Fixed
+- **Keychain Access Bug**: Fixed typo in member ID retrieval from keychain
+  - Corrected key format to use proper environment-specific key
+  - Added logging for re-verification attempts
+  - Bug was introduced in Nelson's PR (extra parenthesis in key name)
+
+### Technical Details
+- Modified `VerificationResponse.swift` to retrieve and include existing `accountNumber`
+- Added proper environment context for keychain lookups
+- Updated Package.swift binary URLs to v2.0.17
+
+---
+
 ## [2.0.16] - 2025-11-21
 
 ### Fixed
