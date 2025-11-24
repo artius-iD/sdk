@@ -16,6 +16,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.19] - 2025-11-24
+
+### Fixed
+- **CRITICAL: Lock-Based Concurrent NFC Retry Prevention**: Added robust thread-safe guard to prevent duplicate NFC attempts
+  - Introduced `NFCRetryGuard` class with NSLock-based synchronization
+  - Guarantees only ONE NFC attempt can run at a time (eliminates race conditions)
+  - `tryAcquire()` blocks duplicate calls if retry already in progress
+  - `release()` with defer block ensures lock is ALWAYS released
+  - Comprehensive logging for debugging concurrent attempt blocks
+  
+- **Government ID Instruction Icon Theming**: Fixed tip icons to use secondary color
+  - `ScanIDIntroView`: All tip icons now use `secondaryColor` (TriNet Orange)
+  - `ScanIDBackIntroView`: All tip icons now use `secondaryColor` (TriNet Orange)
+  - Added `.renderingMode(.template)` for proper theming
+  - Now matches passport instruction views and face scan intro view
+
+### Technical Details
+- Modified `ScanChipView.swift`:
+  - Added `NFCRetryGuard` private class with NSLock
+  - Added `static retryGuard` property to ScanChipView
+  - Guard clause at start of `asyncFunction()` with `tryAcquire()`
+  - Defer block ensures `release()` on all exit paths (success, failure, timeout, early return)
+  - Prevents ALL concurrent NFC session creation attempts
+- Modified `ScanIDIntroView.swift` and `ScanIDBackIntroView.swift`:
+  - Changed icon foregroundColor from `onBackgroundColor` to `secondaryColor`
+  - Icons: no_glare_icon, lay_flat_icon, good_light_icon, focus_icon
+
+### Impact
+- **Production-quality fix** addressing all issues from TriNet bug report
+- **Zero chance of concurrent NFC sessions** (previous fix was partial)
+- **Eliminates "System resource unavailable" errors** completely
+- **No more duplicate log entries** ("Starting NFC attempt" printed 3x)
+- **Visual consistency** across all instruction screens
+- **No breaking changes** - drop-in replacement
+
+---
+
 ## [2.0.18] - 2025-11-24
 
 ### Fixed

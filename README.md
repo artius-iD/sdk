@@ -1,6 +1,6 @@
 # ArtiusID iOS SDK - Client Implementation Guide
 
-**SDK Version:** v2.0.18  
+**SDK Version:** v2.0.19  
 **Date:** November 24, 2025  
 **Target Audience:** Client Application Developers  
 **Status:** ✅ Production Ready
@@ -58,14 +58,14 @@ The ArtiusID iOS SDK provides a complete identity verification and authenticatio
    ```
    https://github.com/artius-iD/sdk.git
    ```
-3. Select version `2.0.18` or "Up to Next Major Version" from `2.0.18`
+3. Select version `2.0.19` or "Up to Next Major Version" from `2.0.19`
 4. Click **Add Package**
 
 ### Package.swift
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/artius-iD/sdk.git", from: "2.0.18")
+    .package(url: "https://github.com/artius-iD/sdk.git", from: "2.0.19")
 ]
 ```
 
