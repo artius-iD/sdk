@@ -16,9 +16,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [2.0.26] - 2025-12-02
+## [2.0.27] - 2025-12-02
 
 ### Fixed
+- **CRITICAL: NFC Duplicate Session Prevention**: Fixed SwiftUI onAppear causing duplicate NFC sessions
+  - **Root Cause:** SwiftUI can call `onAppear` multiple times during view lifecycle, each creating a new NFC session Task
+  - **Solution:** Added `@State private var hasStartedNFC` flag to ensure NFC only starts once per view instance
+  - **Impact:** Prevents "System resource unavailable" error and ensures only ONE NFC session runs at a time
+  - Guards against duplicate sessions even when SwiftUI recreates the view during navigation
+  - Works in conjunction with existing `NFCRetryGuard` for complete protection
+  - Modified `ScanChipView.swift` lines 58, 128-141
+
 - **Face Scan Retry Button Text**: Fixed placeholder text on the "Let's try again" screen
   - Changed from non-existent `"button_tryAgain"` to correct `"try_again_button"` localization key
   - Button now displays "Try Again" instead of placeholder text
@@ -29,12 +37,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Back button now correctly returns to document selection screen instead of document back scan
   - Modified `ArtiusIDVerificationView.swift` line 375
 
+- **Document Selection Icon Theming**: Fixed icons to use theme colors instead of hardcoded orange
+  - State ID and Passport icons now properly use `colorScheme.secondaryColor`
+  - Icons will match client theme (e.g., TriNet Orange for TriNet clients)
+  - Updated to use `.foregroundStyle()` (modern SwiftUI API)
+  - Modified `SelectDocumentTypeView.swift` lines 79, 125
+
 ### Technical Details
+- Modified `artiusid-sdk-ios/Views/Passport/ScanChipView.swift`:
+  - Added `@State private var hasStartedNFC: Bool = false` to track NFC initialization
+  - Added guard in `onAppear()` to prevent multiple NFC session starts
+  - Comprehensive logging to track duplicate `onAppear` calls
+  
 - Modified `artiusid-sdk-ios/Views/Face/FaceScanRetryView.swift`:
   - Updated button localization key from `"button_tryAgain"` to `"try_again_button"`
   
 - Modified `artiusid-sdk-ios/Views/PublicUI/ArtiusIDVerificationView.swift`:
   - Updated `oktaIDCollectionView` back navigation from `currentStep = .documentBack` to `currentStep = .documentSelection`
+
+- Modified `artiusid-sdk-ios/Views/Document/SelectDocumentTypeView.swift`:
+  - Changed icon colors from hardcoded `Color(hex: "#D64100")` to `colorScheme.secondaryColor`
+  - Reordered modifiers: `.renderingMode(.template)` before `.resizable()` for better practice
 
 ---
 
