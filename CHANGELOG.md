@@ -19,13 +19,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.0.27] - 2025-12-02
 
 ### Fixed
-- **CRITICAL: NFC Duplicate Session Prevention**: Fixed SwiftUI onAppear causing duplicate NFC sessions
-  - **Root Cause:** SwiftUI can call `onAppear` multiple times during view lifecycle, each creating a new NFC session Task
-  - **Solution:** Added `@State private var hasStartedNFC` flag to ensure NFC only starts once per view instance
-  - **Impact:** Prevents "System resource unavailable" error and ensures only ONE NFC session runs at a time
-  - Guards against duplicate sessions even when SwiftUI recreates the view during navigation
-  - Works in conjunction with existing `NFCRetryGuard` for complete protection
-  - Modified `ScanChipView.swift` lines 58, 128-141
+- **CRITICAL: NFC Duplicate Session Prevention (UIHostingController Fix)**: Fixed duplicate onAppear calls in UIHostingController
+  - **Root Cause:** When ScanChipView is wrapped in UIHostingController (standard integration pattern), SwiftUI calls `onAppear` twice, creating duplicate NFC sessions
+  - **Solution:** Implemented static class-level guard with NSLock for thread-safe prevention
+    - Added `private static var nfcStarted` flag (persists across view instances)
+    - Added `private static let nfcStartLock` (NSLock for thread safety)
+    - Guard in `onAppear()` prevents multiple NFC session starts
+    - `onDisappear()` resets flag to allow re-entry to screen
+  - **Impact:** 
+    - Prevents "System resource unavailable" (NFCError Code 203)
+    - Prevents "SWIFT TASK CONTINUATION MISUSE" error
+    - Ensures only ONE NFC session runs regardless of view lifecycle
+    - Works with both direct SwiftUI navigation AND UIHostingController wrapping
+  - **Defense in Depth:** Works in conjunction with existing `NFCRetryGuard` for complete protection
+  - Modified `ScanChipView.swift` lines 67-69, 124, 133-163
 
 - **Face Scan Retry Button Text**: Fixed placeholder text on the "Let's try again" screen
   - Changed from non-existent `"button_tryAgain"` to correct `"try_again_button"` localization key
@@ -45,9 +52,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Technical Details
 - Modified `artiusid-sdk-ios/Views/Passport/ScanChipView.swift`:
-  - Added `@State private var hasStartedNFC: Bool = false` to track NFC initialization
-  - Added guard in `onAppear()` to prevent multiple NFC session starts
-  - Comprehensive logging to track duplicate `onAppear` calls
+  - **Removed** instance-level `@State private var hasStartedNFC` (doesn't work with UIHostingController)
+  - **Added** static class-level guards:
+    - `private static var nfcStarted = false` - Persists across view instances
+    - `private static let nfcStartLock = NSLock()` - Thread-safe lock
+  - **Enhanced** `onAppear()` function:
+    - Thread-safe lock acquire/release around guard check
+    - Prevents duplicate NFC starts even when UIHostingController calls onAppear twice
+    - Comprehensive logging identifies UIHostingController as cause
+  - **Added** `onDisappear()` function:
+    - Resets static `nfcStarted` flag when view is dismissed
+    - Allows NFC to start again if user navigates back to chip scan
+    - Thread-safe flag reset with lock protection
   
 - Modified `artiusid-sdk-ios/Views/Face/FaceScanRetryView.swift`:
   - Updated button localization key from `"button_tryAgain"` to `"try_again_button"`
