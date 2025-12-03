@@ -55,18 +55,18 @@ Add the following to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/artiusID/sdk.git", from: "1.0.16")
+    .package(url: "https://github.com/artius-iD/sdk.git", from: "2.0.47")
 ]
 ```
 
 Or add it through Xcode:
 1. File → Add Package Dependencies
-2. Enter the repository URL: `https://github.com/artiusID/sdk.git`
+2. Enter the repository URL: `https://github.com/artius-iD/sdk.git`
 3. Select version and add to your target
 
 ### Manual Installation
 
-1. Download the latest `artiusid_sdk_ios.xcframework.zip` from [GitHub Releases](https://github.com/artiusID/sdk/releases)
+1. Download the latest `artiusid_sdk_ios.xcframework.zip` from [GitHub Releases](https://github.com/artius-iD/sdk/releases)
 2. Extract and drag `artiusid_sdk_ios.xcframework` into your Xcode project
 3. Add Firebase dependencies to your project (FirebaseCore, FirebaseMessaging) if you want push notifications
 4. OpenSSL is included automatically
@@ -138,7 +138,7 @@ if ArtiusIDSDKWrapper.shared.isReadyForVerification() {
 
 ```swift
 let info = ArtiusIDSDKWrapper.shared.getSDKInfo()
-print("SDK Version: 1.0.98
+print("SDK Version: \(info["version"] ?? "Unknown")")
 print("Platform: \(info["platform"] ?? "Unknown")")
 
 printArtiusIDSDKInfo()
@@ -205,7 +205,7 @@ public func printArtiusIDSDKInfo()
 
 - Email: support@artiusid.com
 - Documentation: [docs.artiusid.com](https://docs.artiusid.com)
-- Issues: [GitHub Issues](https://github.com/artiusID/sdk/issues)
+- Issues: [GitHub Issues](https://github.com/artius-iD/sdk/issues)
 
 ## License
 
