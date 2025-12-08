@@ -102,6 +102,8 @@ public class ArtiusIDSDKWrapper {
     ///   - mobileDomain: Domain for mobile services (e.g., "mobile.artiusid.dev")
     ///   - registrationUrlTemplate: URL template for registration services
     ///   - registrationDomain: Domain for registration services (e.g., "registration.artiusid.dev")
+    ///   - clientId: Client ID for API requests
+    ///   - clientGroupId: Client Group ID for API requests
     ///   - logLevel: Logging level for SDK operations
     ///   - includeOktaIDInVerificationPayload: Whether to include Okta ID in verification requests (default: true)
     /// - Note: Client provides template + domain, SDK replaces tokens:
@@ -121,6 +123,8 @@ public class ArtiusIDSDKWrapper {
         mobileDomain: String,
         registrationUrlTemplate: String,
         registrationDomain: String,
+        clientId: Int,
+        clientGroupId: Int,
         logLevel: LogLevel = .info,
         includeOktaIDInVerificationPayload: Bool = true
     ) {
@@ -138,6 +142,8 @@ public class ArtiusIDSDKWrapper {
         print("  Mobile Domain: \(mobileDomain)")
         print("  Registration Template: \(registrationUrlTemplate)")
         print("  Registration Domain: \(registrationDomain)")
+        print("  Client ID: \(clientId)")
+        print("  Client Group ID: \(clientGroupId)")
         print("  Log Level: \(logLevel)")
         print("  Include Okta ID: \(includeOktaIDInVerificationPayload)")
         
@@ -149,6 +155,8 @@ public class ArtiusIDSDKWrapper {
                 mobileDomain: mobileDomain,
                 registrationUrlTemplate: registrationUrlTemplate,
                 registrationDomain: registrationDomain,
+                clientId: clientId,
+                clientGroupId: clientGroupId,
                 includeOktaIDInVerificationPayload: includeOktaIDInVerificationPayload
             )
         }
@@ -233,7 +241,7 @@ public class ArtiusIDSDKWrapper {
 
 // SDK Information and utilities
 public struct ArtiusIDSDKInfo {
-    public static let version = "2.0.13"
+    public static let version = "2.0.58"
     public static let wrapperVersion = "2.0.15"
     public static let build = "iOS Universal Binary (Device + Simulator)"
     public static let architecture = "iOS (arm64 + x86_64)"
@@ -253,6 +261,8 @@ public func configureArtiusIDSDK(
     mobileDomain: String,
     registrationUrlTemplate: String,
     registrationDomain: String,
+    clientId: Int,
+    clientGroupId: Int,
     logLevel: LogLevel = .info,
     includeOktaIDInVerificationPayload: Bool = true
 ) {
@@ -262,6 +272,8 @@ public func configureArtiusIDSDK(
         mobileDomain: mobileDomain,
         registrationUrlTemplate: registrationUrlTemplate,
         registrationDomain: registrationDomain,
+        clientId: clientId,
+        clientGroupId: clientGroupId,
         logLevel: logLevel,
         includeOktaIDInVerificationPayload: includeOktaIDInVerificationPayload
     )

@@ -55,7 +55,7 @@ Add the following to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/artius-iD/sdk.git", from: "2.0.47")
+    .package(url: "https://github.com/artius-iD/sdk.git", from: "2.0.58")
 ]
 ```
 
@@ -90,7 +90,15 @@ import artiusid_sdk_ios
 
 func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
     // Initialize ArtiusID SDK
-    ArtiusIDSDKWrapper.shared.configure(environment: .production)
+    ArtiusIDSDKWrapper.shared.configure(
+        environment: .production,
+        urlTemplate: "https://#domain#",
+        mobileDomain: "service-mobile.artiusid.com",
+        registrationUrlTemplate: "https://#domain#",
+        registrationDomain: "service-registration.artiusid.com",
+        clientId: YOUR_CLIENT_ID,
+        clientGroupId: YOUR_CLIENT_GROUP_ID
+    )
     return true
 }
 ```
@@ -106,7 +114,15 @@ import FirebaseMessaging
 class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         FirebaseApp.configure()
-        ArtiusIDSDKWrapper.shared.configure(environment: .production)
+        ArtiusIDSDKWrapper.shared.configure(
+            environment: .production,
+            urlTemplate: "https://#domain#",
+            mobileDomain: "service-mobile.artiusid.com",
+            registrationUrlTemplate: "https://#domain#",
+            registrationDomain: "service-registration.artiusid.com",
+            clientId: YOUR_CLIENT_ID,
+            clientGroupId: YOUR_CLIENT_GROUP_ID
+        )
         Messaging.messaging().delegate = self
         return true
     }

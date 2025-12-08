@@ -1,7 +1,7 @@
 # ArtiusID iOS SDK - Client Implementation Guide
 
-**SDK Version:** v2.0.27  
-**Date:** December 2, 2025  
+**SDK Version:** v2.0.58  
+**Date:** December 8, 2025  
 **Target Audience:** Client Application Developers  
 **Status:** ✅ Production Ready
 
@@ -58,14 +58,14 @@ The ArtiusID iOS SDK provides a complete identity verification and authenticatio
    ```
    https://github.com/artius-iD/sdk.git
    ```
-3. Select version `2.0.27` or "Up to Next Major Version" from `2.0.27`
+3. Select version `2.0.58` or "Up to Next Major Version" from `2.0.58`
 4. Click **Add Package**
 
 ### Package.swift
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/artius-iD/sdk.git", from: "2.0.27")
+    .package(url: "https://github.com/artius-iD/sdk.git", from: "2.0.58")
 ]
 ```
 
@@ -102,10 +102,14 @@ struct YourApp: App {
     private func configureSDK() {
         ArtiusIDSDKWrapper.shared.configure(
             environment: .sandbox,
-            baseURL: "https://sandbox.mobile.artiusid.dev",
-            registrationDomain: "sandbox.registration.artiusid.dev",
-            includeOktaIDInVerificationPayload: true,  // Optional: Enable Okta ID
-            logLevel: .debug
+            urlTemplate: "https://#env#.#domain#",
+            mobileDomain: "mobile.artiusid.dev",
+            registrationUrlTemplate: "https://#env#.#domain#",
+            registrationDomain: "registration.artiusid.dev",
+            clientId: YOUR_CLIENT_ID,           // Required: Your Client ID
+            clientGroupId: YOUR_CLIENT_GROUP_ID, // Required: Your Client Group ID
+            logLevel: .debug,
+            includeOktaIDInVerificationPayload: true  // Optional: Enable Okta ID
         )
         
         print("✅ ArtiusID SDK v\(ArtiusIDSDKInfo.version) configured")
@@ -173,10 +177,14 @@ The SDK supports multiple environments:
 ```swift
 ArtiusIDSDKWrapper.shared.configure(
     environment: Environments,              // Required: .sandbox, .development, .staging, .production
-    baseURL: String,                        // Required: Base URL for mobile services
+    urlTemplate: String,                    // Required: URL template (e.g., "https://#env#.#domain#")
+    mobileDomain: String,                   // Required: Domain for mobile services
+    registrationUrlTemplate: String,        // Required: URL template for registration
     registrationDomain: String,             // Required: Domain for certificate registration
-    includeOktaIDInVerificationPayload: Bool = true,  // Optional: Enable Okta ID collection
-    logLevel: LogLevel = .info              // Optional: .debug, .info, .warning, .error
+    clientId: Int,                          // Required: Your Client ID
+    clientGroupId: Int,                     // Required: Your Client Group ID
+    logLevel: LogLevel = .info,             // Optional: .debug, .info, .warning, .error
+    includeOktaIDInVerificationPayload: Bool = true  // Optional: Enable Okta ID collection
 )
 ```
 
@@ -188,18 +196,26 @@ ArtiusIDSDKWrapper.shared.configure(
 #if DEBUG
 ArtiusIDSDKWrapper.shared.configure(
     environment: .sandbox,
-    baseURL: "https://sandbox.mobile.artiusid.dev",
-    registrationDomain: "sandbox.registration.artiusid.dev",
-    includeOktaIDInVerificationPayload: true,
-    logLevel: .debug
+    urlTemplate: "https://#env#.#domain#",
+    mobileDomain: "mobile.artiusid.dev",
+    registrationUrlTemplate: "https://#env#.#domain#",
+    registrationDomain: "registration.artiusid.dev",
+    clientId: YOUR_CLIENT_ID,
+    clientGroupId: YOUR_CLIENT_GROUP_ID,
+    logLevel: .debug,
+    includeOktaIDInVerificationPayload: true
 )
 #else
 ArtiusIDSDKWrapper.shared.configure(
     environment: .production,
-    baseURL: "https://service-mobile.artiusid.dev",
-    registrationDomain: "service-registration.artiusid.dev",
-    includeOktaIDInVerificationPayload: true,
-    logLevel: .warning
+    urlTemplate: "https://#env#.#domain#",
+    mobileDomain: "mobile.artiusid.com",
+    registrationUrlTemplate: "https://#env#.#domain#",
+    registrationDomain: "registration.artiusid.com",
+    clientId: YOUR_CLIENT_ID,
+    clientGroupId: YOUR_CLIENT_GROUP_ID,
+    logLevel: .warning,
+    includeOktaIDInVerificationPayload: true
 )
 #endif
 ```
@@ -211,37 +227,47 @@ class AppConfiguration {
     enum Environment {
         case sandbox, staging, production
         
-        var sdkConfig: (env: Environments, baseURL: String, regDomain: String) {
+        var sdkConfig: (env: Environments, urlTemplate: String, mobileDomain: String, regTemplate: String, regDomain: String) {
             switch self {
             case .sandbox:
                 return (.sandbox, 
-                       "https://sandbox.mobile.artiusid.dev",
-                       "sandbox.registration.artiusid.dev")
+                       "https://#env#.#domain#",
+                       "mobile.artiusid.dev",
+                       "https://#env#.#domain#",
+                       "registration.artiusid.dev")
             case .staging:
                 return (.staging, 
-                       "https://service-mobile.stage.artiusid.dev",
+                       "https://#domain#",
+                       "service-mobile.stage.artiusid.dev",
+                       "https://#domain#",
                        "service-registration.stage.artiusid.dev")
             case .production:
                 return (.production, 
-                       "https://service-mobile.artiusid.dev",
-                       "service-registration.artiusid.dev")
+                       "https://#domain#",
+                       "service-mobile.artiusid.com",
+                       "https://#domain#",
+                       "service-registration.artiusid.com")
             }
         }
     }
     
-    static func configure(for environment: Environment) {
+    static func configure(for environment: Environment, clientId: Int, clientGroupId: Int) {
         let config = environment.sdkConfig
         ArtiusIDSDKWrapper.shared.configure(
             environment: config.env,
-            baseURL: config.baseURL,
+            urlTemplate: config.urlTemplate,
+            mobileDomain: config.mobileDomain,
+            registrationUrlTemplate: config.regTemplate,
             registrationDomain: config.regDomain,
+            clientId: clientId,
+            clientGroupId: clientGroupId,
             logLevel: .debug
         )
     }
 }
 
 // Usage:
-AppConfiguration.configure(for: .sandbox)
+AppConfiguration.configure(for: .sandbox, clientId: 123, clientGroupId: 456)
 ```
 
 ---
@@ -677,10 +703,14 @@ v2.0.11 introduces optional Okta ID collection during the verification flow. Thi
 // Enable Okta ID collection (default: true)
 ArtiusIDSDKWrapper.shared.configure(
     environment: .sandbox,
-    baseURL: "https://sandbox.mobile.artiusid.dev",
-    registrationDomain: "sandbox.registration.artiusid.dev",
-    includeOktaIDInVerificationPayload: true,  // ✅ Enable Okta ID
-    logLevel: .debug
+    urlTemplate: "https://#env#.#domain#",
+    mobileDomain: "mobile.artiusid.dev",
+    registrationUrlTemplate: "https://#env#.#domain#",
+    registrationDomain: "registration.artiusid.dev",
+    clientId: YOUR_CLIENT_ID,
+    clientGroupId: YOUR_CLIENT_GROUP_ID,
+    logLevel: .debug,
+    includeOktaIDInVerificationPayload: true  // ✅ Enable Okta ID
 )
 ```
 
@@ -690,10 +720,14 @@ ArtiusIDSDKWrapper.shared.configure(
 // Disable Okta ID collection
 ArtiusIDSDKWrapper.shared.configure(
     environment: .production,
-    baseURL: "https://service-mobile.artiusid.dev",
-    registrationDomain: "service-registration.artiusid.dev",
-    includeOktaIDInVerificationPayload: false,  // ❌ Disable Okta ID
-    logLevel: .warning
+    urlTemplate: "https://#domain#",
+    mobileDomain: "service-mobile.artiusid.com",
+    registrationUrlTemplate: "https://#domain#",
+    registrationDomain: "service-registration.artiusid.com",
+    clientId: YOUR_CLIENT_ID,
+    clientGroupId: YOUR_CLIENT_GROUP_ID,
+    logLevel: .warning,
+    includeOktaIDInVerificationPayload: false  // ❌ Disable Okta ID
 )
 ```
 
@@ -764,10 +798,14 @@ class AppSettings: ObservableObject {
     func reconfigureSDK() {
         ArtiusIDSDKWrapper.shared.configure(
             environment: .sandbox,
-            baseURL: "https://sandbox.mobile.artiusid.dev",
-            registrationDomain: "sandbox.registration.artiusid.dev",
-            includeOktaIDInVerificationPayload: oktaIdEnabled,
-            logLevel: .debug
+            urlTemplate: "https://#env#.#domain#",
+            mobileDomain: "mobile.artiusid.dev",
+            registrationUrlTemplate: "https://#env#.#domain#",
+            registrationDomain: "registration.artiusid.dev",
+            clientId: YOUR_CLIENT_ID,
+            clientGroupId: YOUR_CLIENT_GROUP_ID,
+            logLevel: .debug,
+            includeOktaIDInVerificationPayload: oktaIdEnabled
         )
         print("✅ Okta ID collection: \(oktaIdEnabled ? "enabled" : "disabled")")
     }
@@ -937,8 +975,12 @@ let logLevel = LogLevel.warning
 
 ArtiusIDSDKWrapper.shared.configure(
     environment: environment,
-    baseURL: environment.baseURL,
-    registrationDomain: environment.registrationDomain,
+    urlTemplate: "https://#env#.#domain#",
+    mobileDomain: "mobile.artiusid.dev",
+    registrationUrlTemplate: "https://#env#.#domain#",
+    registrationDomain: "registration.artiusid.dev",
+    clientId: YOUR_CLIENT_ID,
+    clientGroupId: YOUR_CLIENT_GROUP_ID,
     logLevel: logLevel
 )
 ```
@@ -1106,8 +1148,12 @@ Enable verbose logging to diagnose issues:
 ```swift
 ArtiusIDSDKWrapper.shared.configure(
     environment: .sandbox,
-    baseURL: "https://sandbox.mobile.artiusid.dev",
-    registrationDomain: "sandbox.registration.artiusid.dev",
+    urlTemplate: "https://#env#.#domain#",
+    mobileDomain: "mobile.artiusid.dev",
+    registrationUrlTemplate: "https://#env#.#domain#",
+    registrationDomain: "registration.artiusid.dev",
+    clientId: YOUR_CLIENT_ID,
+    clientGroupId: YOUR_CLIENT_GROUP_ID,
     logLevel: .debug  // ✅ Enable all logs
 )
 
@@ -1131,10 +1177,14 @@ public class ArtiusIDSDKWrapper {
     
     public func configure(
         environment: Environments,
-        baseURL: String,
+        urlTemplate: String,
+        mobileDomain: String,
+        registrationUrlTemplate: String,
         registrationDomain: String,
-        includeOktaIDInVerificationPayload: Bool = true,
-        logLevel: LogLevel = .info
+        clientId: Int,
+        clientGroupId: Int,
+        logLevel: LogLevel = .info,
+        includeOktaIDInVerificationPayload: Bool = true
     )
     
     public func updateFCMToken(_ token: String)
@@ -1147,8 +1197,8 @@ SDK version information.
 
 ```swift
 public struct ArtiusIDSDKInfo {
-    public static let version: String              // "2.0.15"
-    public static let wrapperVersion: String       // "2.0.15"
+    public static let version: String              // "2.0.58"
+    public static let wrapperVersion: String       // "2.0.58"
     public static let build: String
     public static let architecture: String
     

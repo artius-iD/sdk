@@ -16,6 +16,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.58] - 2025-12-08
+
+### Changed
+- **Dynamic Client Configuration**: `clientId` and `clientGroupId` can now be passed dynamically from client applications
+  - Added `clientId` and `clientGroupId` as required parameters to `ArtiusIDSDK.configure()`
+  - Added `clientId` and `clientGroupId` as required parameters to `ArtiusIDSDKWrapper.configure()`
+  - Changed `AppConstants.clientId` and `AppConstants.clientGroupId` from `let` to `var` to allow runtime configuration
+  - Client apps must now provide these values during SDK configuration instead of relying on hardcoded defaults
+
+### Migration
+- **Breaking Change**: The `configure()` method now requires `clientId` and `clientGroupId` parameters
+- Update your SDK initialization call to include these parameters:
+  ```swift
+  ArtiusIDSDKWrapper.shared.configure(
+      environment: .sandbox,
+      urlTemplate: "https://#env#.#domain#",
+      mobileDomain: "mobile.artiusid.dev",
+      registrationUrlTemplate: "https://#env#.#domain#",
+      registrationDomain: "registration.artiusid.dev",
+      clientId: 123,           // ← Now required
+      clientGroupId: 456,      // ← Now required
+      logLevel: .info
+  )
+  ```
+
+---
+
 ## [2.0.43] - 2025-12-03
 
 ### Fixed
