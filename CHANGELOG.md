@@ -16,14 +16,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [2.0.58] - 2025-12-08
+## [2.0.59] - 2025-12-08
 
 ### Changed
 - **Dynamic Client Configuration**: `clientId` and `clientGroupId` can now be passed dynamically from client applications
   - Added `clientId` and `clientGroupId` as required parameters to `ArtiusIDSDK.configure()`
   - Added `clientId` and `clientGroupId` as required parameters to `ArtiusIDSDKWrapper.configure()`
+  - Added `clientId` and `clientGroupId` as required parameters to `ArtiusIDKit.configure()`
   - Changed `AppConstants.clientId` and `AppConstants.clientGroupId` from `let` to `var` to allow runtime configuration
   - Client apps must now provide these values during SDK configuration instead of relying on hardcoded defaults
+
+### Fixed
+- **Namespace Conflict**: Removed `public typealias ArtiusID = ArtiusIDSDKWrapper` which was shadowing the `ArtiusID` enum namespace
+  - This was preventing access to `ArtiusID.ApprovalResponseView` and other namespaced components
+- **SampleAppView Compilation**: Fixed missing `message` and `isSuccess` parameters in `ApprovalResponseView` initialization
 
 ### Migration
 - **Breaking Change**: The `configure()` method now requires `clientId` and `clientGroupId` parameters
