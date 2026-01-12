@@ -12,6 +12,13 @@ import artiusid_sdk_ios
 // Provide backward compatibility with ArtiusIDSDK name
 //public typealias ArtiusIDSDK = ArtiusIDSDKWrapper
 
+// MARK: - Public Type Exports from Binary SDK
+#if canImport(artiusid_sdk_ios)
+public typealias AppNotificationState = artiusid_sdk_ios.AppNotificationState
+public typealias Environments = artiusid_sdk_ios.Environments
+public typealias LogLevel = artiusid_sdk_ios.LogLevel
+#endif
+
 // MARK: - Dependency Initialization & Verification
 public final class ArtiusIDSDKDependencies {
     /// Initialize dependencies to ensure proper linking
@@ -252,10 +259,17 @@ public struct ArtiusIDSDKInfo {
     }
 }
 
-// MARK: - Public Convenience API
-// Note: ArtiusID is defined as an enum namespace in ArtiusID.swift
-// Do not create a typealias here as it would shadow the namespace
+// MARK: - ArtiusID Namespace
+/// Convenience namespace for accessing SDK components
+public enum ArtiusID {
+    #if canImport(artiusid_sdk_ios)
+    public static var AppNotificationState: artiusid_sdk_ios.AppNotificationState.Type {
+        return artiusid_sdk_ios.AppNotificationState.self
+    }
+    #endif
+}
 
+// MARK: - Public Convenience API
 public func configureArtiusIDSDK(
     environment: Environments? = nil,
     urlTemplate: String,
