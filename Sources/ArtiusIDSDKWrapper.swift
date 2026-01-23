@@ -163,15 +163,20 @@ public class ArtiusIDSDKWrapper {
         
         // Configure the binary SDK (it handles its own logging internally)
         if let env = environment {
+            // Get environment token for URL construction
+            let envToken = getEnvironmentToken(env)
+            
+            // Process mobile URL template to create baseURL
+            let baseURL = urlTemplate
+                .replacingOccurrences(of: "#env#", with: envToken)
+                .replacingOccurrences(of: "#domain#", with: mobileDomain)
+            
+            print("[ArtiusIDSDKWrapper] Configuring binary SDK with baseURL: \(baseURL)")
+            
+            // The binary SDK expects just environment and baseURL
             ArtiusIDSDK.shared.configure(
                 environment: env,
-                urlTemplate: urlTemplate,
-                mobileDomain: mobileDomain,
-                registrationUrlTemplate: registrationUrlTemplate,
-                registrationDomain: registrationDomain,
-                clientId: clientId,
-                clientGroupId: clientGroupId,
-                includeOktaIDInVerificationPayload: includeOktaIDInVerificationPayload
+                baseURL: baseURL
             )
         }
         print("[ArtiusIDSDKWrapper] SDK initialized successfully")
@@ -192,6 +197,25 @@ public class ArtiusIDSDKWrapper {
             print("[ArtiusIDSDKWrapper] Error logging enabled")
         @unknown default:
             print("[ArtiusIDSDKWrapper] Unknown log level: \(level)")
+        }
+    }
+    
+    /// Get environment token for URL replacement
+    /// Returns the appropriate prefix for each environment
+    private func getEnvironmentToken(_ environment: Environments) -> String {
+        switch environment {
+        case .sandbox, .Sandbox:
+            return "sandbox"
+        case .development, .Development:
+            return "dev"
+        case .staging, .Staging:
+            return "stage"
+        case .qa, .QA:
+            return "qa"
+        case .production, .Production:
+            return ""  // Empty for production
+        @unknown default:
+            return ""
         }
     }
 
