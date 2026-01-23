@@ -111,7 +111,7 @@ public class ArtiusIDSDKWrapper {
     ///   - registrationDomain: Domain for registration services (e.g., "registration.artiusid.dev")
     ///   - clientId: Client ID for API requests
     ///   - clientGroupId: Client Group ID for API requests
-    ///   - logLevel: Logging level for SDK operations
+    ///   - logLevel: Logging level for SDK operations (applied to wrapper logger)
     ///   - includeOktaIDInVerificationPayload: Whether to include Okta ID in verification requests (default: true)
     /// - Note: Client provides template + domain, SDK replaces tokens:
     ///   - #env# → environment prefix (sandbox, dev, stage, or empty)
@@ -140,8 +140,15 @@ public class ArtiusIDSDKWrapper {
         guard ArtiusIDSDKDependencies.verifyDependencies() else {
             fatalError("ArtiusID SDK dependencies not properly configured")
         }
+        
+        // Set wrapper-level logging
+        do {
+            try setLoggingLevel(logLevel)
+        } catch {
+            print("[ArtiusIDSDKWrapper] Warning: Could not set logging level: \(error)")
+        }
+        
         configureFirebaseIfAvailable()
-        LogManager.setLogLevel(logLevel)
         
         print("[ArtiusIDSDKWrapper] Configuration:")
         print("  Environment: \(String(describing: environment))")
@@ -154,7 +161,7 @@ public class ArtiusIDSDKWrapper {
         print("  Log Level: \(logLevel)")
         print("  Include Okta ID: \(includeOktaIDInVerificationPayload)")
         
-        // If environment is provided, configure the binary SDK
+        // Configure the binary SDK (it handles its own logging internally)
         if let env = environment {
             ArtiusIDSDK.shared.configure(
                 environment: env,
@@ -168,6 +175,24 @@ public class ArtiusIDSDKWrapper {
             )
         }
         print("[ArtiusIDSDKWrapper] SDK initialized successfully")
+    }
+    
+    /// Set logging level for the wrapper (binary SDK manages its own logging)
+    private func setLoggingLevel(_ level: LogLevel) throws {
+        // The wrapper applies logging at the wrapper level only
+        // Binary SDK logging is configured internally
+        switch level {
+        case .debug:
+            print("[ArtiusIDSDKWrapper] Debug logging enabled")
+        case .info:
+            print("[ArtiusIDSDKWrapper] Info logging enabled")
+        case .warning:
+            print("[ArtiusIDSDKWrapper] Warning logging enabled")
+        case .error:
+            print("[ArtiusIDSDKWrapper] Error logging enabled")
+        @unknown default:
+            print("[ArtiusIDSDKWrapper] Unknown log level: \(level)")
+        }
     }
 
     /// Update FCM token securely in keychain
