@@ -276,12 +276,6 @@ public class ArtiusIDSDKWrapper {
     /// Check if SDK is ready for verification (FCM token available)
     public func isReadyForVerification() -> Bool {
     return getCurrentFCMToken() != nil
-    }
-
-    // MARK: - Private Implementation
-
-    /// Configure Firebase integration if available
-    private func configureFirebaseIfAvailable() {
         #if canImport(FirebaseCore)
         if FirebaseApp.app() != nil {
             isFirebaseConfigured = true
@@ -314,6 +308,13 @@ public class ArtiusIDSDKWrapper {
             if let token = token {
                 self?.updateFCMToken(token)
             }
+                // Store Okta ID in keychain if provided
+                keychain.setOktaUserId(oktaUserId, environment: environment?.rawValue ?? "")
+                if let userId = oktaUserId, !userId.isEmpty {
+                    print("[ArtiusIDSDKWrapper] Okta user ID set and stored in keychain: \(userId.prefix(10))...")
+                } else {
+                    print("[ArtiusIDSDKWrapper] Okta user ID cleared from keychain")
+                }
         }
         #endif
     }
