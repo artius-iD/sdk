@@ -1,7 +1,7 @@
 # ArtiusID iOS SDK - Client Implementation Guide
 
 **SDK Version:** v2.0.59  
-**Date:** December 8, 2025  
+**Date:** January 23, 2026  
 **Target Audience:** Client Application Developers  
 **Status:** ✅ Production Ready
 
@@ -27,7 +27,7 @@
 
 ## 📖 Overview
 
-The ArtiusID iOS SDK provides a complete identity verification and authentication solution for iOS applications. This guide covers all features available in v2.0.15.
+The ArtiusID iOS SDK provides a complete identity verification and authentication solution for iOS applications. This guide covers all features available in v2.0.59.
 
 ### Key Features
 
@@ -747,6 +747,93 @@ When enabled, the flow includes an Okta ID collection step:
 5. Results
 ```
 
+### Automatic Keychain Integration
+
+The SDK automatically reads Okta user ID from the iOS keychain when `includeOktaIDInVerificationPayload` is enabled. This allows seamless integration with apps that already store Okta credentials.
+
+**Keychain as Single Source of Truth:**
+
+The SDK uses keychain exclusively for Okta ID storage and retrieval. This ensures:
+- ✅ Data persistence across app sessions
+- ✅ No state synchronization issues
+- ✅ Secure storage using iOS Keychain Services
+- ✅ Environment-specific storage support
+
+**Keychain Search Strategy:**
+
+The SDK searches for Okta user ID in the following order:
+
+1. Environment-specific key: `"oktaUserId_<environment>"` (e.g., `"oktaUserId_sandbox"`)
+2. Default key: `"oktaUserId"`
+3. Multiple service identifiers:
+   - Current service: `"com.artiusid.sdk"`
+   - Client app service: `"com.artiusid.trinetmobileapp"`
+   - Bundle identifier service: Your app's bundle ID
+
+**Example: Storing Okta User ID for SDK**
+
+```swift
+import Foundation
+import Security
+
+// Store Okta user ID in keychain for SDK to read
+func storeOktaUserIdForSDK(_ userId: String) {
+    let service = "com.artiusid.trinetmobileapp"
+    let account = "oktaUserId"
+    
+    guard let data = userId.data(using: .utf8) else { return }
+    
+    let query: [String: Any] = [
+        kSecClass as String: kSecClassGenericPassword,
+        kSecAttrService as String: service,
+        kSecAttrAccount as String: account,
+        kSecValueData as String: data
+    ]
+    
+    // Delete any existing item
+    SecItemDelete(query as CFDictionary)
+    
+    // Add new item
+    let status = SecItemAdd(query as CFDictionary, nil)
+    if status == errSecSuccess {
+        print("✅ Okta user ID stored successfully")
+    } else {
+        print("❌ Failed to store Okta user ID: \(status)")
+    }
+}
+
+// Usage after Okta authentication
+func handleOktaAuthSuccess(userId: String) {
+    storeOktaUserIdForSDK(userId)
+    // SDK will automatically read this during verification
+}
+```
+
+**Environment-Specific Storage:**
+
+For apps with multiple environments, use environment-specific keys:
+
+```swift
+func storeOktaUserIdForEnvironment(_ userId: String, environment: String) {
+    let service = "com.artiusid.trinetmobileapp"
+    let account = "oktaUserId_\(environment.lowercased())"
+    
+    // ... same keychain storage code as above
+}
+
+// Usage
+storeOktaUserIdForEnvironment("user@example.com", environment: "sandbox")
+```
+
+**SDK Behavior:**
+
+- ✅ Okta ID is always read from and saved to keychain
+- ✅ If Okta ID is found in keychain, collection view is skipped automatically
+- ✅ If not found, user is prompted to enter it (saved to keychain on submit)
+- ✅ Verification proceeds without Okta ID if not available (no error)
+- ✅ Manual entry through UI automatically saves to keychain
+- ✅ Environment-specific keys prevent cross-environment contamination
+
 ### Handling Okta ID in Results
 
 ```swift
@@ -1128,6 +1215,63 @@ try? CertificateManager.shared.removeCertificate()
 - Comprehensive logging for troubleshooting
 - Automatic certificate reload after generation
 
+### Issue: Certificate generation fails on first run (Error -999)
+
+**Symptoms:**
+- App logs show: `⚠️ WARNING, [APIManager]  Caught error: Error Domain=NSURLErrorDomain Code=-999 "cancelled"`
+- Logs show: `Connection 1: TLS Client Certificates encountered error 1:89`
+- Server challenges for client certificate during initial certificate generation: `Received auth challenge: NSURLAuthenticationMethodClientCertificate`
+- All subsequent authentication attempts fail with "Client certificate not available"
+
+**Root Cause:**
+**This is a backend misconfiguration.** The `LoadCertificateFunction` endpoint is incorrectly requiring mTLS authentication. This endpoint generates and returns the signed certificate needed for mTLS, so it cannot require the certificate it's trying to create (chicken-and-egg problem).
+
+**Expected Behavior:**
+- ✅ `LoadCertificateFunction` - **Must NOT require mTLS** (initial certificate generation)
+- ✅ All other API endpoints - **Must require mTLS** (verification, authentication, etc.)
+
+**Log Pattern Indicating Backend Misconfiguration:**
+```
+🔍 DEBUG, [APIManager]  Sending Request to URL: https://sandbox.mobile.artiusid.dev/LoadCertificateFunction
+🔍 DEBUG, [SecureSessionDelegate] Received auth challenge: NSURLAuthenticationMethodClientCertificate
+⚠️ WARNING, [SecureSessionDelegate] No client identity available
+Connection 1: TLS Client Certificates encountered error 1:89
+⚠️ WARNING, [APIManager]  Caught error: Error Domain=NSURLErrorDomain Code=-999 "cancelled"
+❌ ERROR, [APIManager] Load Certificate Error: requestCancelled
+```
+
+**Solution:**
+**Contact your backend/DevOps team** to fix the server configuration:
+
+1. **Verify API Gateway/Load Balancer settings** - The `LoadCertificateFunction` endpoint must accept standard HTTPS without client certificate validation
+2. **Check TLS/SSL policies** - Ensure certificate requirements are applied to all endpoints EXCEPT `LoadCertificateFunction`
+3. **Review Lambda/Function authorizers** - Certificate-based authorization should not apply to the certificate generation endpoint
+
+**Temporary Workaround (if backend fix is delayed):**
+If you need to unblock development and the verification flow works (some environments may have different configurations):
+```swift
+// Use verification flow first to generate certificate
+ArtiusIDVerificationView(
+    configuration: config,
+    onCompletion: { result in
+        if result.isSuccessful {
+            // Certificate now available for authentication
+            startAuthentication()
+        }
+    },
+    onCancel: { }
+)
+```
+**Note:** This is only a workaround. The proper fix is backend configuration.
+
+**Verification After Backend Fix:**
+Logs should show successful certificate generation:
+```
+✅ Certificate and private key stored successfully
+✅ Successfully found existing identity for environment
+🔐 mTLS READY - Client certificate loaded
+```
+
 ### Issue: Wrong environment URLs
 
 **Solution:**
@@ -1319,8 +1463,8 @@ public enum DocumentRecaptureType {
 
 ### SDK Information
 
-- **Version:** v2.0.15
-- **Release Date:** November 19, 2025
+- **Version:** v2.0.59
+- **Release Date:** January 23, 2026
 - **Status:** ✅ Production Ready
 
 ### Resources
@@ -1385,5 +1529,5 @@ public enum DocumentRecaptureType {
 
 For additional help, please refer to the sample app or contact our support team.
 
-*Last Updated: November 19, 2025*
+*Last Updated: January 23, 2026*
 
