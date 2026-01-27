@@ -127,12 +127,6 @@ public class ArtiusIDSDKWrapper {
     ///   - registrationDomain: Domain for registration services (e.g., "registration.artiusid.dev")
     ///   - clientId: Client ID for API requests
     ///   - clientGroupId: Client Group ID for API requests
-            keychain.setOktaUserId(oktaUserId, environment: environment?.rawValue ?? "")
-            if let userId = oktaUserId, !userId.isEmpty {
-                print("[ArtiusIDSDKWrapper] Okta user ID set and stored in keychain: \(userId.prefix(10))...")
-            } else {
-                print("[ArtiusIDSDKWrapper] Okta user ID cleared from keychain")
-            }
     ///   - includeOktaIDInVerificationPayload: Whether to include Okta ID in verification requests (default: true)
     /// - Note: Client provides template + domain, SDK replaces tokens:
     ///   - #env# → environment prefix (sandbox, dev, stage, or empty)
@@ -145,9 +139,6 @@ public class ArtiusIDSDKWrapper {
     ///     urlTemplate: "https://#domain#"
     ///     mobileDomain: "service-mobile.dev.artiusid.dev"
     ///     Result: "https://service-mobile.dev.artiusid.dev"
-    /// Configure SDK with automatic dependency initialization
-    /// - Parameters:
-    ///   - oktaUserId: (Optional) Okta user ID to use for verification. If provided, this value is used instead of reading from keychain.
     public func configure(
         environment: Environments? = nil,
         urlTemplate: String,
@@ -164,18 +155,23 @@ public class ArtiusIDSDKWrapper {
         ArtiusIDSDKDependencies.initialize()
         guard ArtiusIDSDKDependencies.verifyDependencies() else {
             fatalError("ArtiusID SDK dependencies not properly configured")
-            if let userId = userId, !userId.isEmpty {
-                _ = keychain.set(userId, forKey: oktaIdKey)
-                print("[ArtiusIDSDKWrapper] Okta user ID set and stored in keychain: \(userId.prefix(10))...")
-            } else {
-                _ = keychain.delete(forKey: oktaIdKey)
-                print("[ArtiusIDSDKWrapper] Okta user ID cleared from keychain")
-            }
-        
+        }
+
+        // Store Okta ID in keychain if provided
+        keychain.setOktaUserId(oktaUserId, environment: environment?.rawValue ?? "")
+        if let userId = oktaUserId, !userId.isEmpty {
+            print("[ArtiusIDSDKWrapper] Okta user ID set and stored in keychain: \(userId.prefix(10))...")
+        } else {
+            print("[ArtiusIDSDKWrapper] Okta user ID cleared from keychain")
+        }
+
         // Set wrapper-level logging
         do {
             try setLoggingLevel(logLevel)
-        
+        } catch {
+            print("[ArtiusIDSDKWrapper] Failed to set logging level: \(error)")
+        }
+
         configureFirebaseIfAvailable()
         self.oktaUserId = oktaUserId
         print("[ArtiusIDSDKWrapper] Configuration:")
@@ -224,7 +220,7 @@ public class ArtiusIDSDKWrapper {
         let env = environment ?? ArtiusIDSDK.shared.environment.rawValue
         return keychain.getOktaUserId(environment: env)
     }
-    
+
     /// Set logging level for the wrapper (binary SDK manages its own logging)
     private func setLoggingLevel(_ level: LogLevel) throws {
         // The wrapper applies logging at the wrapper level only
@@ -243,16 +239,32 @@ public class ArtiusIDSDKWrapper {
         }
     }
 
+    /// Configure Firebase if available
+    private func configureFirebaseIfAvailable() {
+        #if canImport(FirebaseCore)
+        if FirebaseApp.app() != nil {
+            isFirebaseConfigured = true
+            setupFCMTokenHandling()
+            print("[ArtiusIDSDKWrapper] Firebase integration enabled")
+        } else {
+            print("[ArtiusIDSDKWrapper] Firebase available but not configured by client app")
+        }
+        #else
+        print("[ArtiusIDSDKWrapper] Firebase not available - operating in standalone mode")
+        #endif
+        // Certificate logic is now handled internally by the binary SDK
+    }
+
     /// Update FCM token securely in keychain
     public func updateFCMToken(_ token: String) {
-    _ = keychain.set(token, forKey: "fcmToken")
-    ArtiusIDSDK.shared.updateFCMToken(token)
-    print("[ArtiusIDSDKWrapper] FCM token updated securely and passed to SDK")
+        _ = keychain.set(token, forKey: "fcmToken")
+        ArtiusIDSDK.shared.updateFCMToken(token)
+        print("[ArtiusIDSDKWrapper] FCM token updated securely and passed to SDK")
     }
 
     /// Get current FCM token from secure storage
     public func getCurrentFCMToken() -> String? {
-    return keychain.get(forKey: "fcmToken")
+        return keychain.get(forKey: "fcmToken")
     }
 
     /// Get comprehensive SDK and integration information
@@ -269,25 +281,13 @@ public class ArtiusIDSDKWrapper {
         info["firebaseAvailable"] = false
         info["firebaseConfigured"] = false
         #endif
-    info["fcmTokenAvailable"] = getCurrentFCMToken() != nil
+        info["fcmTokenAvailable"] = getCurrentFCMToken() != nil
         return info
     }
 
     /// Check if SDK is ready for verification (FCM token available)
     public func isReadyForVerification() -> Bool {
-    return getCurrentFCMToken() != nil
-        #if canImport(FirebaseCore)
-        if FirebaseApp.app() != nil {
-            isFirebaseConfigured = true
-            setupFCMTokenHandling()
-            print("[ArtiusIDSDKWrapper] Firebase integration enabled")
-        } else {
-            print("[ArtiusIDSDKWrapper] Firebase available but not configured by client app")
-        }
-        #else
-        print("[ArtiusIDSDKWrapper] Firebase not available - operating in standalone mode")
-        #endif
-        // Certificate logic is now handled internally by the binary SDK
+        return getCurrentFCMToken() != nil
     }
 
     /// Setup FCM token refresh handling
@@ -308,13 +308,6 @@ public class ArtiusIDSDKWrapper {
             if let token = token {
                 self?.updateFCMToken(token)
             }
-                // Store Okta ID in keychain if provided
-                keychain.setOktaUserId(oktaUserId, environment: environment?.rawValue ?? "")
-                if let userId = oktaUserId, !userId.isEmpty {
-                    print("[ArtiusIDSDKWrapper] Okta user ID set and stored in keychain: \(userId.prefix(10))...")
-                } else {
-                    print("[ArtiusIDSDKWrapper] Okta user ID cleared from keychain")
-                }
         }
         #endif
     }
