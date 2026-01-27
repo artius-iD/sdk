@@ -60,7 +60,7 @@ public class Keychain {
         let data = value.data(using: .utf8)!
         let query = [
             kSecClass as String: kSecClassGenericPassword as String,
-            kSecAttrService as String: service,
+        private let oktaIdKey = "oktaUserId"
             kSecAttrAccount as String: key,
             kSecValueData as String: data
         ] as [String: Any]
@@ -98,6 +98,8 @@ public class ArtiusIDSDKWrapper {
     public static let shared = ArtiusIDSDKWrapper()
     private let keychain = Keychain()
     private var isFirebaseConfigured = false
+    /// The Okta user ID explicitly set by the client app (preferred over keychain)
+    private var oktaUserId: String?
     private init() {}
 
     // MARK: - Core SDK Interface
@@ -111,7 +113,13 @@ public class ArtiusIDSDKWrapper {
     ///   - registrationDomain: Domain for registration services (e.g., "registration.artiusid.dev")
     ///   - clientId: Client ID for API requests
     ///   - clientGroupId: Client Group ID for API requests
-    ///   - logLevel: Logging level for SDK operations (applied to wrapper logger)
+            if let userId = oktaUserId, !userId.isEmpty {
+                _ = keychain.set(userId, forKey: oktaIdKey)
+                print("[ArtiusIDSDKWrapper] Okta user ID set and stored in keychain: \(userId.prefix(10))...")
+            } else {
+                _ = keychain.delete(forKey: oktaIdKey)
+                print("[ArtiusIDSDKWrapper] Okta user ID cleared from keychain")
+            }
     ///   - includeOktaIDInVerificationPayload: Whether to include Okta ID in verification requests (default: true)
     /// - Note: Client provides template + domain, SDK replaces tokens:
     ///   - #env# → environment prefix (sandbox, dev, stage, or empty)
@@ -124,6 +132,9 @@ public class ArtiusIDSDKWrapper {
     ///     urlTemplate: "https://#domain#"
     ///     mobileDomain: "service-mobile.dev.artiusid.dev"
     ///     Result: "https://service-mobile.dev.artiusid.dev"
+    /// Configure SDK with automatic dependency initialization
+    /// - Parameters:
+    ///   - oktaUserId: (Optional) Okta user ID to use for verification. If provided, this value is used instead of reading from keychain.
     public func configure(
         environment: Environments? = nil,
         urlTemplate: String,
@@ -133,23 +144,27 @@ public class ArtiusIDSDKWrapper {
         clientId: Int,
         clientGroupId: Int,
         logLevel: LogLevel = .info,
-        includeOktaIDInVerificationPayload: Bool = true
+        includeOktaIDInVerificationPayload: Bool = true,
+        oktaUserId: String? = nil
     ) {
         // Initialize dependencies first
         ArtiusIDSDKDependencies.initialize()
         guard ArtiusIDSDKDependencies.verifyDependencies() else {
             fatalError("ArtiusID SDK dependencies not properly configured")
-        }
+            if let userId = userId, !userId.isEmpty {
+                _ = keychain.set(userId, forKey: oktaIdKey)
+                print("[ArtiusIDSDKWrapper] Okta user ID set and stored in keychain: \(userId.prefix(10))...")
+            } else {
+                _ = keychain.delete(forKey: oktaIdKey)
+                print("[ArtiusIDSDKWrapper] Okta user ID cleared from keychain")
+            }
         
         // Set wrapper-level logging
         do {
             try setLoggingLevel(logLevel)
-        } catch {
-            print("[ArtiusIDSDKWrapper] Warning: Could not set logging level: \(error)")
-        }
         
         configureFirebaseIfAvailable()
-        
+        self.oktaUserId = oktaUserId
         print("[ArtiusIDSDKWrapper] Configuration:")
         print("  Environment: \(String(describing: environment))")
         print("  URL Template: \(urlTemplate)")
@@ -160,7 +175,9 @@ public class ArtiusIDSDKWrapper {
         print("  Client Group ID: \(clientGroupId)")
         print("  Log Level: \(logLevel)")
         print("  Include Okta ID: \(includeOktaIDInVerificationPayload)")
-        
+        if let oktaUserId = oktaUserId {
+            print("  Okta User ID (explicit): \(String(oktaUserId.prefix(10)))...")
+        }
         // Configure the binary SDK with all parameters
         if let env = environment {
             ArtiusIDSDK.shared.configure(
@@ -175,6 +192,22 @@ public class ArtiusIDSDKWrapper {
             )
         }
         print("[ArtiusIDSDKWrapper] SDK initialized successfully")
+    }
+
+    /// Set or update the Okta user ID at runtime (preferred over keychain)
+    public func setOktaUserId(_ userId: String?) {
+        self.oktaUserId = userId
+        print("[ArtiusIDSDKWrapper] Okta user ID set explicitly: \(userId?.prefix(10) ?? "nil")...")
+    }
+
+    /// Get the Okta user ID to use for verification (explicit > keychain)
+    public func getOktaUserId(for environment: String? = nil) -> String? {
+        if let explicit = oktaUserId, !explicit.isEmpty {
+            return explicit
+        }
+        // Fallback to keychain if not set
+        let env = environment ?? ArtiusIDSDK.shared.environment.rawValue
+        return KeychainHelper.standard.getOktaUserId(for: env)
     }
     
     /// Set logging level for the wrapper (binary SDK manages its own logging)
@@ -295,6 +328,8 @@ public enum ArtiusID {
 }
 
 // MARK: - Public Convenience API
+/// Public convenience API for configuring the SDK
+/// - oktaUserId: (Optional) Pass the Okta user ID directly from the client app for maximum reliability
 public func configureArtiusIDSDK(
     environment: Environments? = nil,
     urlTemplate: String,
@@ -304,7 +339,8 @@ public func configureArtiusIDSDK(
     clientId: Int,
     clientGroupId: Int,
     logLevel: LogLevel = .info,
-    includeOktaIDInVerificationPayload: Bool = true
+    includeOktaIDInVerificationPayload: Bool = true,
+    oktaUserId: String? = nil
 ) {
     ArtiusIDSDKWrapper.shared.configure(
         environment: environment,
@@ -315,7 +351,8 @@ public func configureArtiusIDSDK(
         clientId: clientId,
         clientGroupId: clientGroupId,
         logLevel: logLevel,
-        includeOktaIDInVerificationPayload: includeOktaIDInVerificationPayload
+        includeOktaIDInVerificationPayload: includeOktaIDInVerificationPayload,
+        oktaUserId: oktaUserId
     )
 }
 
