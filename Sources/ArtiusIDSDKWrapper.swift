@@ -52,15 +52,16 @@ public final class ArtiusIDSDKDependencies {
     }
 }
 
-// Simple Keychain wrapper for FCM token storag
+// Simple Keychain wrapper for FCM token storage and Okta ID
 public class Keychain {
     private let service: String
+    private let oktaIdKey = "oktaUserId"
     public init(service: String = "artiusid.dev") { self.service = service }
     public func set(_ value: String, forKey key: String) -> Bool {
         let data = value.data(using: .utf8)!
         let query = [
             kSecClass as String: kSecClassGenericPassword as String,
-        private let oktaIdKey = "oktaUserId"
+            kSecAttrService as String: service,
             kSecAttrAccount as String: key,
             kSecValueData as String: data
         ] as [String: Any]
@@ -91,6 +92,19 @@ public class Keychain {
         ] as [String: Any]
         return SecItemDelete(query as CFDictionary) == errSecSuccess
     }
+    // Helper for Okta ID (environment-specific)
+    public func setOktaUserId(_ userId: String?, environment: String) {
+        let key = "oktaUserId_\(environment.lowercased())"
+        if let userId = userId, !userId.isEmpty {
+            _ = set(userId, forKey: key)
+        } else {
+            _ = delete(forKey: key)
+        }
+    }
+    public func getOktaUserId(environment: String) -> String? {
+        let key = "oktaUserId_\(environment.lowercased())"
+        return get(forKey: key)
+    }
 }
 
 // MARK: - Main SDK Wrapper
@@ -113,11 +127,10 @@ public class ArtiusIDSDKWrapper {
     ///   - registrationDomain: Domain for registration services (e.g., "registration.artiusid.dev")
     ///   - clientId: Client ID for API requests
     ///   - clientGroupId: Client Group ID for API requests
+            keychain.setOktaUserId(oktaUserId, environment: environment?.rawValue ?? "")
             if let userId = oktaUserId, !userId.isEmpty {
-                _ = keychain.set(userId, forKey: oktaIdKey)
                 print("[ArtiusIDSDKWrapper] Okta user ID set and stored in keychain: \(userId.prefix(10))...")
             } else {
-                _ = keychain.delete(forKey: oktaIdKey)
                 print("[ArtiusIDSDKWrapper] Okta user ID cleared from keychain")
             }
     ///   - includeOktaIDInVerificationPayload: Whether to include Okta ID in verification requests (default: true)
@@ -197,6 +210,8 @@ public class ArtiusIDSDKWrapper {
     /// Set or update the Okta user ID at runtime (preferred over keychain)
     public func setOktaUserId(_ userId: String?) {
         self.oktaUserId = userId
+        let env = ArtiusIDSDK.shared.environment.rawValue
+        keychain.setOktaUserId(userId, environment: env)
         print("[ArtiusIDSDKWrapper] Okta user ID set explicitly: \(userId?.prefix(10) ?? "nil")...")
     }
 
@@ -207,7 +222,7 @@ public class ArtiusIDSDKWrapper {
         }
         // Fallback to keychain if not set
         let env = environment ?? ArtiusIDSDK.shared.environment.rawValue
-        return KeychainHelper.standard.getOktaUserId(for: env)
+        return keychain.getOktaUserId(environment: env)
     }
     
     /// Set logging level for the wrapper (binary SDK manages its own logging)
