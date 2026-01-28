@@ -56,7 +56,7 @@ public final class ArtiusIDSDKDependencies {
 public class Keychain {
     private let service: String
     private let oktaIdKey = "oktaUserId"
-    public init(service: String = "artiusid.dev") { self.service = service }
+    public init(service: String = "com.artiusid.sdk") { self.service = service }
     public func set(_ value: String, forKey key: String) -> Bool {
         let data = value.data(using: .utf8)!
         let query = [
