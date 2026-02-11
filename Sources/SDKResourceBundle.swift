@@ -86,6 +86,31 @@ public class SDKResourceBundle {
         return localizedValue
     }
     
+    /// Get localized string checking client bundle first, then SDK bundle
+    /// This allows client apps to override SDK localizations
+    public func localizedStringWithClientFallback(_ key: String, fallback: String? = nil) -> String {
+        // 1. First check if LocalizationManager has runtime overrides
+        let locMgr = LocalizationManager.shared
+        if locMgr.hasOverride(forKey: key) {
+            return locMgr.string(forKey: key)
+        }
+        
+        // 2. Check the main bundle (client's Localizable.strings)
+        let mainBundleString = NSLocalizedString(key, bundle: .main, value: "__NOT_FOUND__", comment: "")
+        if mainBundleString != "__NOT_FOUND__" && mainBundleString != key {
+            return mainBundleString
+        }
+        
+        // 3. Check SDK resource bundle
+        let sdkString = bundle.localizedString(forKey: key, value: "__NOT_FOUND__", table: nil)
+        if sdkString != "__NOT_FOUND__" && sdkString != key {
+            return sdkString
+        }
+        
+        // 4. Use provided fallback or return key
+        return fallback ?? key
+    }
+    
     /// Get image from the correct bundle
     public func image(named name: String) -> UIImage? {
         let image = UIImage(named: name, in: bundle, compatibleWith: nil)
@@ -122,11 +147,3 @@ extension Image {
     }
 }
 #endif
-
-/// String extension for SDK localization
-extension String {
-    /// Get localized string from SDK bundle
-    public static func sdkLocalized(_ key: String) -> String {
-        return SDKResourceBundle.shared.localizedString(forKey: key)
-    }
-}
