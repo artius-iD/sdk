@@ -267,6 +267,15 @@ public class ArtiusIDSDKWrapper {
         return keychain.get(forKey: "fcmToken")
     }
 
+    // MARK: - Language Management
+
+    /// Set the SDK's display language at runtime
+    /// - Parameter languageCode: Language code (e.g., "en", "es", "fr")
+    public func setLanguage(_ languageCode: String) {
+        artiusid_sdk_ios.LocalizationManager.shared.setLocale(Locale(identifier: languageCode))
+        print("[ArtiusIDSDKWrapper] 🌍 Language set to \(languageCode)")
+    }
+
     /// Get comprehensive SDK and integration information
     public func getSDKInfo() -> [String: Any] {
         var info: [String: Any] = [:]
