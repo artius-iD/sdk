@@ -86,28 +86,101 @@ public class SDKResourceBundle {
         return localizedValue
     }
     
+    /// Get localized string for a specific locale
+    /// - Parameters:
+    ///   - key: The localization key
+    ///   - locale: The target locale
+    ///   - fallback: Fallback string if not found
+    /// - Returns: Localized string for the specified locale, or fallback/key
+    public func localizedString(forKey key: String, locale: Locale, fallback: String? = nil) -> String {
+        // Try to get the localized string from the specific locale's .lproj directory
+        if let localizedValue = localizedStringFromLocaje(key, locale: locale, bundle: bundle) {
+            return localizedValue
+        }
+        
+        // Fallback to provided fallback or key
+        return fallback ?? key
+    }
+    
+    /// Get localized string from a specific locale's .lproj directory
+    private func localizedStringFromLocaje(_ key: String, locale: Locale, bundle: Bundle) -> String? {
+        let languageCode = locale.language.languageCode?.identifier ?? "en"
+        
+        // Try language-region combination first (e.g., "es-ES", "en-US")
+        if let regionCode = locale.region?.identifier {
+            let localeIdentifier = "\(languageCode)-\(regionCode)"
+            if let value = loadStringFromBundle(key, localization: localeIdentifier, bundle: bundle) {
+                return value
+            }
+        }
+        
+        // Try just the language code (e.g., "es", "en")
+        if let value = loadStringFromBundle(key, localization: languageCode, bundle: bundle) {
+            return value
+        }
+        
+        // Try lowercase language code as fallback
+        if let value = loadStringFromBundle(key, localization: languageCode.lowercased(), bundle: bundle) {
+            return value
+        }
+        
+        return nil
+    }
+    
+    /// Load localized string from a specific localization using Bundle's native support
+    private func loadStringFromBundle(_ key: String, localization: String, bundle: Bundle) -> String? {
+        // Try to get the localization bundle
+        guard let lprojPath = bundle.path(forResource: localization, ofType: "lproj"),
+              let lprojBundle = Bundle(path: lprojPath) else {
+            return nil
+        }
+        
+        // Load the string using the localization bundle
+        let value = lprojBundle.localizedString(forKey: key, value: "__NOT_FOUND__", table: nil)
+        
+        // Return the value if it's not the not-found sentinel
+        if value != "__NOT_FOUND__" && value != key {
+            return value
+        }
+        
+        return nil
+    }
+    
     /// Get localized string checking client bundle first, then SDK bundle
     /// This allows client apps to override SDK localizations
-    public func localizedStringWithClientFallback(_ key: String, fallback: String? = nil) -> String {
+    public func localizedStringWithClientFallback(_ key: String, fallback: String? = nil, locale: Locale? = nil) -> String {
         // 1. First check if LocalizationManager has runtime overrides
         let locMgr = LocalizationManager.shared
         if locMgr.hasOverride(forKey: key) {
             return locMgr.string(forKey: key)
         }
         
-        // 2. Check the main bundle (client's Localizable.strings)
+        // Use provided locale or fall back to Locale.current
+        let targetLocale = locale ?? Locale.current
+        
+        // 2. Check the main bundle (client's Localizable.strings) with target locale
+        if let clientString = localizedStringFromLocaje(key, locale: targetLocale, bundle: .main) {
+            return clientString
+        }
+        
+        // 3. Fallback to main bundle with system locale
         let mainBundleString = NSLocalizedString(key, bundle: .main, value: "__NOT_FOUND__", comment: "")
         if mainBundleString != "__NOT_FOUND__" && mainBundleString != key {
             return mainBundleString
         }
         
-        // 3. Check SDK resource bundle
+        // 4. Check SDK resource bundle with target locale
+        if let sdkString = localizedStringFromLocaje(key, locale: targetLocale, bundle: bundle) {
+            return sdkString
+        }
+        
+        // 5. Fallback to SDK resource bundle with system locale
         let sdkString = bundle.localizedString(forKey: key, value: "__NOT_FOUND__", table: nil)
         if sdkString != "__NOT_FOUND__" && sdkString != key {
             return sdkString
         }
         
-        // 4. Use provided fallback or return key
+        // 6. Use provided fallback or return key
         return fallback ?? key
     }
     
