@@ -42,13 +42,13 @@ public class SDKResourceBundle {
             // Check if this bundle contains our specific resources
             if hasSDKResources(in: candidate) {
                 _bundle = candidate
-                print("[ArtiusIDSDK] Found resources in bundle: \(candidate.bundlePath)")
+                logInfo("Found resources in bundle: \(candidate.bundlePath)", source: "SDKResourceBundle")
                 return candidate
             }
         }
         
         // If no resources found, log warning but continue with main bundle
-        print("[ArtiusIDSDK] Warning: Could not locate SDK resource bundle. Using main bundle as fallback.")
+        logWarning("Could not locate SDK resource bundle. Using main bundle as fallback.", source: "SDKResourceBundle")
         _bundle = Bundle.main
         return Bundle.main
     }
@@ -80,7 +80,7 @@ public class SDKResourceBundle {
         
         // If we get back the key itself, the localization wasn't found
         if localizedValue == key && value == nil {
-            print("[ArtiusIDSDK] Warning: Localized string not found for key: \(key)")
+            logWarning("Localized string not found for key: \(key)", source: "SDKResourceBundle")
         }
         
         return localizedValue
@@ -189,7 +189,7 @@ public class SDKResourceBundle {
         let image = UIImage(named: name, in: bundle, compatibleWith: nil)
         
         if image == nil {
-            print("[ArtiusIDSDK] Warning: Image not found: \(name)")
+            logWarning("Image not found: \(name)", source: "SDKResourceBundle")
         }
         
         return image

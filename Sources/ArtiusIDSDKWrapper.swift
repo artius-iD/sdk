@@ -30,24 +30,24 @@ public final class ArtiusIDSDKDependencies {
         #if canImport(FirebaseMessaging)
         _ = Messaging.self
         #endif
-        print("ArtiusID SDK dependencies initialized successfully")
+        logInfo("ArtiusID SDK dependencies initialized successfully", source: "ArtiusIDSDKWrapper")
     }
 
     /// Verify that all required dependencies are available
     public static func verifyDependencies() -> Bool {
         #if canImport(FirebaseCore)
         guard NSClassFromString("FIRApp") != nil else {
-            print("❌ Firebase not available")
+            logWarning("Firebase not available", source: "ArtiusIDSDKWrapper")
             return false
         }
         #endif
         #if canImport(FirebaseMessaging)
         guard NSClassFromString("FIRMessaging") != nil else {
-            print("❌ Firebase Messaging not available")
+            logWarning("Firebase Messaging not available", source: "ArtiusIDSDKWrapper")
             return false
         }
         #endif
-        print("✅ All ArtiusID SDK dependencies verified")
+        logInfo("All ArtiusID SDK dependencies verified", source: "ArtiusIDSDKWrapper")
         return true
     }
 }
@@ -160,32 +160,32 @@ public class ArtiusIDSDKWrapper {
         // Store Okta ID in keychain if provided
         keychain.setOktaUserId(oktaUserId, environment: environment?.rawValue ?? "")
         if let userId = oktaUserId, !userId.isEmpty {
-            print("[ArtiusIDSDKWrapper] Okta user ID set and stored in keychain: \(userId.prefix(10))...")
+            logInfo("Okta user ID set and stored in keychain: \(userId.prefix(10))...", source: "ArtiusIDSDKWrapper")
         } else {
-            print("[ArtiusIDSDKWrapper] Okta user ID cleared from keychain")
+            logInfo("Okta user ID cleared from keychain", source: "ArtiusIDSDKWrapper")
         }
 
         // Set wrapper-level logging
         do {
             try setLoggingLevel(logLevel)
         } catch {
-            print("[ArtiusIDSDKWrapper] Failed to set logging level: \(error)")
+            logError("Failed to set logging level: \(error)", source: "ArtiusIDSDKWrapper")
         }
 
         configureFirebaseIfAvailable()
         self.oktaUserId = oktaUserId
-        print("[ArtiusIDSDKWrapper] Configuration:")
-        print("  Environment: \(String(describing: environment))")
-        print("  URL Template: \(urlTemplate)")
-        print("  Mobile Domain: \(mobileDomain)")
-        print("  Registration Template: \(registrationUrlTemplate)")
-        print("  Registration Domain: \(registrationDomain)")
-        print("  Client ID: \(clientId)")
-        print("  Client Group ID: \(clientGroupId)")
-        print("  Log Level: \(logLevel)")
-        print("  Include Okta ID: \(includeOktaIDInVerificationPayload)")
+        logDebug("Configuration:", source: "ArtiusIDSDKWrapper")
+        logDebug("  Environment: \(String(describing: environment))", source: "ArtiusIDSDKWrapper")
+        logDebug("  URL Template: \(urlTemplate)", source: "ArtiusIDSDKWrapper")
+        logDebug("  Mobile Domain: \(mobileDomain)", source: "ArtiusIDSDKWrapper")
+        logDebug("  Registration Template: \(registrationUrlTemplate)", source: "ArtiusIDSDKWrapper")
+        logDebug("  Registration Domain: \(registrationDomain)", source: "ArtiusIDSDKWrapper")
+        logDebug("  Client ID: \(clientId)", source: "ArtiusIDSDKWrapper")
+        logDebug("  Client Group ID: \(clientGroupId)", source: "ArtiusIDSDKWrapper")
+        logDebug("  Log Level: \(logLevel)", source: "ArtiusIDSDKWrapper")
+        logDebug("  Include Okta ID: \(includeOktaIDInVerificationPayload)", source: "ArtiusIDSDKWrapper")
         if let oktaUserId = oktaUserId {
-            print("  Okta User ID (explicit): \(String(oktaUserId.prefix(10)))...")
+            logDebug("  Okta User ID (explicit): \(String(oktaUserId.prefix(10)))...", source: "ArtiusIDSDKWrapper")
         }
         // Configure the binary SDK with all parameters
         if let env = environment {
@@ -200,7 +200,7 @@ public class ArtiusIDSDKWrapper {
                 includeOktaIDInVerificationPayload: includeOktaIDInVerificationPayload
             )
         }
-        print("[ArtiusIDSDKWrapper] SDK initialized successfully")
+        logInfo("SDK initialized successfully", source: "ArtiusIDSDKWrapper")
     }
 
     /// Set or update the Okta user ID at runtime (preferred over keychain)
@@ -208,7 +208,7 @@ public class ArtiusIDSDKWrapper {
         self.oktaUserId = userId
         let env = ArtiusIDSDK.shared.environment.rawValue
         keychain.setOktaUserId(userId, environment: env)
-        print("[ArtiusIDSDKWrapper] Okta user ID set explicitly: \(userId?.prefix(10) ?? "nil")...")
+        logInfo("Okta user ID set explicitly: \(userId?.prefix(10) ?? "nil")...", source: "ArtiusIDSDKWrapper")
     }
 
     /// Get the Okta user ID to use for verification (explicit > keychain)
@@ -227,15 +227,15 @@ public class ArtiusIDSDKWrapper {
         // Binary SDK logging is configured internally
         switch level {
         case .debug:
-            print("[ArtiusIDSDKWrapper] Debug logging enabled")
+            logInfo("Debug logging enabled", source: "ArtiusIDSDKWrapper")
         case .info:
-            print("[ArtiusIDSDKWrapper] Info logging enabled")
+            logInfo("Info logging enabled", source: "ArtiusIDSDKWrapper")
         case .warning:
-            print("[ArtiusIDSDKWrapper] Warning logging enabled")
+            logInfo("Warning logging enabled", source: "ArtiusIDSDKWrapper")
         case .error:
-            print("[ArtiusIDSDKWrapper] Error logging enabled")
+            logInfo("Error logging enabled", source: "ArtiusIDSDKWrapper")
         @unknown default:
-            print("[ArtiusIDSDKWrapper] Unknown log level: \(level)")
+            logWarning("Unknown log level: \(level)", source: "ArtiusIDSDKWrapper")
         }
     }
 
@@ -245,12 +245,12 @@ public class ArtiusIDSDKWrapper {
         if FirebaseApp.app() != nil {
             isFirebaseConfigured = true
             setupFCMTokenHandling()
-            print("[ArtiusIDSDKWrapper] Firebase integration enabled")
+            logInfo("Firebase integration enabled", source: "ArtiusIDSDKWrapper")
         } else {
-            print("[ArtiusIDSDKWrapper] Firebase available but not configured by client app")
+            logWarning("Firebase available but not configured by client app", source: "ArtiusIDSDKWrapper")
         }
         #else
-        print("[ArtiusIDSDKWrapper] Firebase not available - operating in standalone mode")
+        logWarning("Firebase not available - operating in standalone mode", source: "ArtiusIDSDKWrapper")
         #endif
         // Certificate logic is now handled internally by the binary SDK
     }
@@ -259,7 +259,7 @@ public class ArtiusIDSDKWrapper {
     public func updateFCMToken(_ token: String) {
         _ = keychain.set(token, forKey: "fcmToken")
         ArtiusIDSDK.shared.updateFCMToken(token)
-        print("[ArtiusIDSDKWrapper] FCM token updated securely and passed to SDK")
+        logInfo("FCM token updated securely and passed to SDK", source: "ArtiusIDSDKWrapper")
     }
 
     /// Get current FCM token from secure storage
@@ -273,7 +273,7 @@ public class ArtiusIDSDKWrapper {
     /// - Parameter languageCode: Language code (e.g., "en", "es", "fr")
     public func setLanguage(_ languageCode: String) {
         artiusid_sdk_ios.LocalizationManager.shared.setLocale(Locale(identifier: languageCode))
-        print("[ArtiusIDSDKWrapper] 🌍 Language set to \(languageCode)")
+        logInfo("Language set to \(languageCode)", source: "ArtiusIDSDKWrapper")
     }
 
     /// Get comprehensive SDK and integration information
@@ -329,9 +329,9 @@ public struct ArtiusIDSDKInfo {
     public static let build = "iOS Universal Binary (Device + Simulator)"
     public static let architecture = "iOS (arm64 + x86_64)"
     public static func printInfo() {
-        print("ArtiusID SDK v\(version) (\(build)) - \(architecture)")
-        print("Wrapper: iPhone and iPad optimized with Firebase integration")
-        print("Production size: ~30MB (device slice only)")
+        logInfo("ArtiusID SDK v\(version) (\(build)) - \(architecture)", source: "ArtiusIDSDKInfo")
+        logInfo("Wrapper: iPhone and iPad optimized with Firebase integration", source: "ArtiusIDSDKInfo")
+        logInfo("Production size: ~30MB (device slice only)", source: "ArtiusIDSDKInfo")
     }
 }
 
