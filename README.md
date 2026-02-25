@@ -962,21 +962,465 @@ let colorScheme = SDKColorScheme(
 )
 ```
 
-### Image Overrides
+### Image Overrides (Complete Branding Control)
 
-Replace SDK images with your own:
+The image override system allows you to completely customize all SDK images with your own branding while maintaining fallback to SDK defaults if overrides are unavailable.
+
+#### Overview
+
+The `SDKImageOverrides` system provides:
+- ✅ Replace any SDK image with custom branding
+- ✅ Automatic fallback to SDK defaults if override fails
+- ✅ Image caching for performance
+- ✅ Preloading for smooth UI transitions
+- ✅ Support for local assets, remote URLs, and programmatic images
+- ✅ Real-time toggle on/off at runtime
+
+#### Available Override Types
+
+You can override the following image categories:
+
+**Face Verification:**
+- `faceOverlay` - Oval mask guide for selfie
+- `faceUpGif` - Animation: tilt phone up
+- `faceDownGif` - Animation: tilt phone down
+- `phoneUpGif` - Phone orientation animation
+- `phoneDownGif` - Phone orientation animation
+- `noGlassesIcon` - Instruction: remove glasses
+- `noHatIcon` - Instruction: remove hat
+- `noMaskIcon` - Instruction: remove mask
+- `goodLightIcon` - Instruction: good lighting
+
+**Document Scanning:**
+- `passportOverlay` - Guide frame for passport
+- `stateIdFrontOverlay` - Guide frame for ID front
+- `stateIdBackOverlay` - Guide frame for ID back
+- `passportAnimationGif` - Passport scan animation
+- `stateIdAnimationGif` - State ID scan animation
+
+**Navigation & Controls:**
+- `backButtonIcon` - Back button
+- `cameraButtonIcon` - Camera shutter button
+- `doneIcon` - Done/confirm button icon
+
+**Document Selection:**
+- `passportIcon` - Passport selection icon
+- `stateIdIcon` - State ID selection icon
+- `scanFaceIcon` - Face scan icon
+- `docScanIcon` - Document scan icon
+
+**Status Indicators:**
+- `successIcon` - Verification successful
+- `failedIcon` - Verification failed
+- `errorIcon` - General error
+- `systemErrorIcon` - System-level error
+- `approvalIcon` - Approved result
+- `declinedIcon` - Declined result
+- `processingImage` - Processing spinner/animation
+
+**Branding & General:**
+- `brandLogo` - Company logo
+- `brandImage` - Brand promotional image
+- `crossPlatformImage` - Cross-platform feature image
+- `crossDeviceImage` - Cross-device feature image
+
+#### Step 1: Prepare Your Images
+
+Add your custom images to `Assets.xcassets` in your app:
+
+1. Open Xcode project
+2. Select **Assets.xcassets** in Project Navigator
+3. Click **+** button → **Image Set**
+4. Name it (e.g., `CustomSuccessIcon`)
+5. Drag your image files (@1x, @2x, @3x) into the appropriate slots
+6. Set the Scales to match your assets
+
+**Image Requirements:**
+- Format: PNG with transparency (recommended)
+- Use @2x and @3x variants for crisp display
+- Follow iOS HIG guidelines for icon sizing
+- Test on iPhone SE through iPhone 14 Pro Max
+
+#### Step 2: Configure Image Overrides
+
+Create an `SDKImageOverrides` configuration object:
 
 ```swift
-let imageOverrides: [String: String] = [
-    "face_scan_frame": "custom_face_frame",
-    "document_frame": "custom_doc_frame",
-    "success_icon": "custom_success",
-    // ... more overrides
-]
+import UIKit
+import ArtiusIDSDK
 
-// Apply overrides
-ImageOverrideManager.shared.setOverrides(imageOverrides)
+func createImageOverrides() -> SDKImageOverrides {
+    return SDKImageOverrides(
+        // Branding
+        brandLogo: UIImage(named: "CompanyLogo"),
+        brandImage: UIImage(named: "BrandPromo"),
+        
+        // Face scan
+        faceOverlay: UIImage(named: "CustomFaceFrame"),
+        faceUpGif: UIImage(named: "TiltUpAnimation"),
+        faceDownGif: UIImage(named: "TiltDownAnimation"),
+        noGlassesIcon: UIImage(named: "RemoveGlasses"),
+        noHatIcon: UIImage(named: "RemoveHat"),
+        noMaskIcon: UIImage(named: "RemoveMask"),
+        
+        // Document scan
+        passportOverlay: UIImage(named: "CustomPassportFrame"),
+        stateIdFrontOverlay: UIImage(named: "CustomIDFrontFrame"),
+        stateIdBackOverlay: UIImage(named: "CustomIDBackFrame"),
+        passportAnimationGif: UIImage(named: "PassportScanAnim"),
+        stateIdAnimationGif: UIImage(named: "IDScanAnim"),
+        
+        // Navigation
+        backButtonIcon: UIImage(named: "CustomBackButton"),
+        cameraButtonIcon: UIImage(named: "CustomCameraButton"),
+        doneIcon: UIImage(named: "CustomCheckmark"),
+        
+        // Status
+        successIcon: UIImage(named: "SuccessCheckmark"),
+        failedIcon: UIImage(named: "FailedX"),
+        errorIcon: UIImage(named: "ErrorAlert"),
+        approvalIcon: UIImage(named: "ApprovedIcon"),
+        declinedIcon: UIImage(named: "DeclinedIcon"),
+        
+        // Options
+        enableCaching: true,           // Cache loaded images
+        enableFallback: true,          // Fall back to SDK defaults
+        preloadImages: true,           // Preload all images
+        cacheDurationMs: 3600000       // Cache for 1 hour
+    )
+}
 ```
+
+#### Step 3: Apply Overrides to SDK
+
+Apply the configuration when initializing the SDK:
+
+```swift
+import SwiftUI
+import ArtiusIDSDK
+
+@main
+struct YourApp: App {
+    init() {
+        // Configure SDK
+        ArtiusIDSDKWrapper.shared.configure(
+            environment: .sandbox,
+            urlTemplate: "https://#env#.#domain#",
+            mobileDomain: "mobile.artiusid.dev",
+            registrationUrlTemplate: "https://#env#.#domain#",
+            registrationDomain: "registration.artiusid.dev",
+            clientId: YOUR_CLIENT_ID,
+            clientGroupId: YOUR_CLIENT_GROUP_ID,
+            logLevel: .debug
+        )
+        
+        // Apply image overrides
+        let overrides = createImageOverrides()
+        ImageOverrideManager.shared.setConfiguration(overrides)
+    }
+    
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+        }
+    }
+}
+```
+
+#### Step 4: Partial Overrides (Optional)
+
+Override only specific images while keeping SDK defaults for others:
+
+```swift
+// Minimal override - just brand logo and checkmark
+let minimalOverrides = SDKImageOverrides(
+    brandLogo: UIImage(named: "CompanyLogo"),
+    successIcon: UIImage(named: "CustomCheckmark"),
+    enableCaching: true,
+    enableFallback: true
+)
+ImageOverrideManager.shared.setConfiguration(minimalOverrides)
+
+// Icon-only override - customize all icons
+let iconOverrides = SDKImageOverrides(
+    successIcon: UIImage(named: "CheckIcon"),
+    failedIcon: UIImage(named: "XIcon"),
+    errorIcon: UIImage(named: "AlertIcon"),
+    approvalIcon: UIImage(named: "ApprovedIcon"),
+    declinedIcon: UIImage(named: "RejectedIcon"),
+    enableFallback: true
+)
+ImageOverrideManager.shared.setConfiguration(iconOverrides)
+```
+
+#### Step 5: Toggle Overrides at Runtime
+
+Enable or disable overrides dynamically (useful for settings):
+
+```swift
+import SwiftUI
+import ArtiusIDSDK
+
+struct SettingsView: View {
+    @State private var customImagesEnabled = false
+    
+    var body: some View {
+        Form {
+            Section("Customization") {
+                Toggle("Use Custom Images", isOn: $customImagesEnabled)
+                    .onChange(of: customImagesEnabled) { _, enabled in
+                        if enabled {
+                            // Apply overrides
+                            let overrides = createImageOverrides()
+                            ImageOverrideManager.shared.setConfiguration(overrides)
+                        } else {
+                            // Clear overrides, revert to SDK defaults
+                            ImageOverrideManager.shared.clearOverrides()
+                        }
+                    }
+            }
+        }
+    }
+}
+
+// Later: Reset to defaults
+ImageOverrideManager.shared.clearOverrides()
+```
+
+#### Step 6: Preloading (Performance Optimization)
+
+Enable preloading to load all images upfront for smooth transitions:
+
+```swift
+// Preloading automatically enabled when preloadImages: true
+let overrides = SDKImageOverrides(
+    // ... your overrides ...
+    preloadImages: true
+)
+ImageOverrideManager.shared.setConfiguration(overrides)
+
+// Monitor preloading progress (useful for splash screens)
+@Published var preloadProgress: Double = 0.0
+
+Task {
+    for await progress in ImageOverrideManager.shared.$preloadProgress {
+        self.preloadProgress = progress
+        if progress == 1.0 {
+            proceedToMainApp()
+        }
+    }
+}
+
+// Or with completion callback
+DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+    if ImageOverrideManager.shared.isPreloading {
+        print("Still preloading: \(Int(ImageOverrideManager.shared.preloadProgress * 100))%")
+    } else {
+        print("Preload complete!")
+    }
+}
+```
+
+#### Step 7: Caching & Memory Management
+
+Control how long images stay cached:
+
+```swift
+let overrides = SDKImageOverrides(
+    // ... your overrides ...
+    enableCaching: true,           // ✅ Cache loaded images
+    cacheDurationMs: 3600000       // Keep for 1 hour (default)
+)
+ImageOverrideManager.shared.setConfiguration(overrides)
+
+// Clear cache manually
+ImageOverrideManager.shared.clearCache { success in
+    if success {
+        print("✅ Image cache cleared")
+    }
+}
+
+// Clear only expired entries
+ImageOverrideManager.shared.clearExpiredCache { count in
+    print("Cleared \(count) expired cache entries")
+}
+
+// Get cache statistics
+ImageOverrideManager.shared.getCacheStatistics { stats in
+    print("Cache size: \(stats.totalSizeBytes) bytes")
+    print("Items: \(stats.itemCount)")
+}
+```
+
+#### Step 8: Error Handling & Fallbacks
+
+The system automatically handles failures:
+
+```swift
+// Enable automatic fallback to SDK defaults
+let overrides = SDKImageOverrides(
+    brandLogo: UIImage(named: "CompanyLogo"),
+    enableFallback: true  // ✅ Use SDK default if custom fails
+)
+ImageOverrideManager.shared.setConfiguration(overrides)
+
+// What happens:
+// 1. Tries to load custom image
+// 2. If custom fails → falls back to SDK default
+// 3. Only shows error if both fail
+
+// To disable fallback (require custom images):
+let strictOverrides = SDKImageOverrides(
+    brandLogo: UIImage(named: "CompanyLogo"),
+    enableFallback: false  // ❌ Fail if custom image unavailable
+)
+```
+
+#### Programmatic Image Creation
+
+Generate images in code instead of using assets:
+
+```swift
+import UIKit
+import ArtiusIDSDK
+
+// Create checkmark icon programmatically
+func createCustomCheckmark(color: UIColor) -> UIImage {
+    let size = CGSize(width: 44, height: 44)
+    let renderer = UIGraphicsImageRenderer(size: size)
+    
+    return renderer.image { context in
+        // Draw checkmark path
+        let path = UIBezierPath()
+        path.move(to: CGPoint(x: 10, y: 22))
+        path.addLine(to: CGPoint(x: 18, y: 30))
+        path.addLine(to: CGPoint(x: 34, y: 14))
+        
+        color.setStroke()
+        path.lineWidth = 3
+        path.lineCapStyle = .round
+        path.lineJoinStyle = .round
+        path.stroke()
+    }
+}
+
+// Use in overrides
+let overrides = SDKImageOverrides(
+    successIcon: createCustomCheckmark(color: .systemGreen)
+)
+ImageOverrideManager.shared.setConfiguration(overrides)
+```
+
+#### Using ThemedImage View
+
+The SDK provides `ThemedImage` and `themedImage()` helper for respecting overrides:
+
+```swift
+import SwiftUI
+import ArtiusIDSDK
+
+struct MyCustomView: View {
+    var body: some View {
+        VStack {
+            // SwiftUI View that respects overrides
+            ThemedImage("success_icon")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 100, height: 100)
+            
+            // Functional helper for modifying images
+            themedImage("back_button")
+                .renderingMode(.template)
+                .foregroundStyle(.blue)
+        }
+    }
+}
+```
+
+#### Debugging & Diagnostics
+
+Enable logging to debug image loading:
+
+```swift
+// Enable debug logging
+ImageOverrideManager.shared.setLogging(enabled: true)
+
+// Get debug information
+print(ImageOverrideManager.shared.getDebugInfo())
+// Output:
+// Image Override Manager Debug Info:
+// 
+// Configuration:
+// - Override count: 12
+// - Caching: enabled
+// - Fallback: enabled
+// - Preload: enabled
+// - Strategy: async
+// - Cache duration: 3600s
+//
+// Preloading:
+// - Active: false
+// - Progress: 100%
+
+// Print to console
+ImageOverrideManager.shared.printDebugInfo()
+
+// Monitor loading
+func monitorImageLoad(key: String) {
+    ImageOverrideManager.shared.loadImage(forKey: key) { result in
+        switch result {
+        case .success(let image):
+            print("✅ Loaded: \(key) - size: \(image.size)")
+        case .failure(let error):
+            print("❌ Failed to load \(key): \(error)")
+        }
+    }
+}
+```
+
+#### Complete Example: Settings UI with Image Toggles
+
+See the ExampleClientApp implementation in `Customization/ImageOverrides.swift` and `Views/SettingsView.swift` for a complete working example:
+
+```swift
+struct SettingsView: View {
+    @State var customImagesEnabled = false
+    @StateObject var sdkConfig = SDKConfigManager.shared
+    
+    var body: some View {
+        Form {
+            Section("Branding") {
+                Toggle("Custom Images", isOn: $customImagesEnabled)
+                    .onChange(of: customImagesEnabled) { _, enabled in
+                        if enabled {
+                            // Apply example overrides
+                            let overrides = CustomImageOverrides.createOverrides()
+                            sdkConfig.setImageOverrides(overrides)
+                        } else {
+                            sdkConfig.resetImageOverrides()
+                        }
+                    }
+                
+                if customImagesEnabled {
+                    Button("Validate Overrides") {
+                        ImageOverrideManager.shared.printDebugInfo()
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+#### Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Images not showing | Enable `enableFallback: true` to see SDK defaults; check asset names |
+| Poor performance | Enable `preloadImages: true`; check file sizes; use appropriate formats |
+| Memory issues | Enable `enableCaching: true` with appropriate `cacheDurationMs` |
+| Wrong images showing | Clear cache with `clearCache()`; verify override configuration |
+| Debug needed | Call `setLogging(enabled: true)` before loading images |
 
 ### Localization
 
