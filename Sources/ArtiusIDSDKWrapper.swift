@@ -294,6 +294,12 @@ public class ArtiusIDSDKWrapper {
         return info
     }
 
+    /// Get the SDK version string
+    /// - Returns: SDK version (e.g., "2.0.59")
+    public func getSDKVersion() -> String {
+        return ArtiusIDSDKInfo.version
+    }
+
     /// Check if SDK is ready for verification (FCM token available)
     public func isReadyForVerification() -> Bool {
         return getCurrentFCMToken() != nil
