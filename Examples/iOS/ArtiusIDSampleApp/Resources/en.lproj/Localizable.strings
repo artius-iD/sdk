@@ -1,0 +1,92 @@
+/*
+  Localizable.strings
+  ArtiusID Sample App
+  
+  English localization
+*/
+
+/* Settings & UI */
+"settings_language" = "Language";
+"settings_theme" = "Theme";
+"settings_title" = "Settings";
+"settings_environment" = "Environment";
+"settings_imageOverrides" = "Image Overrides";
+"language_english" = "English";
+"language_spanish" = "Español";
+"language_french" = "Français";
+
+/* Theme Names */
+"theme_artiusid" = "artius.iD (Default)";
+"theme_dark" = "Dark Mode";
+"theme_corporate" = "Corporate";
+"theme_banking" = "Banking Theme";
+"theme_fintech" = "FinTech Theme";
+
+/* Environment */
+"env_sandbox" = "Sandbox";
+"env_development" = "Development";
+"env_staging" = "Staging";
+"env_production" = "Production";
+
+/* Sample App Specific */
+"sample_verification" = "🔍 Start Verification";
+"sample_authentication" = "🔐 Start Authentication";
+"sample_approval" = "📋 Test Approval Process";
+"sample_demo_flows" = "Demo Flows";
+"sample_language_selection" = "🌍 Language Selection";
+"sample_done" = "Done";
+"sample_auth_request" = "🔐 Test Authentication Request";
+"sample_clear_credentials" = "🚨 Clear ALL Credentials";
+"sample_refresh_fcm" = "🔥 Refresh FCM Token";
+"sample_header_title" = "artius.iD SDK Demo";
+"sample_header_subtitle" = "Secure identity verification and authentication";
+"sample_theme_selection" = "🎨 Theme Selection";
+"sample_image_override" = "🖼️ Image Override Selection";
+"sample_environment_config" = "🌐 Environment & Domain Configuration";
+"sample_okta_config" = "🔐 Okta ID Configuration";
+"sample_environment_label" = "Environment:";
+"sample_okta_collection" = "Okta ID Collection:";
+"sample_okta_enabled" = "✅ Enabled";
+"sample_okta_disabled" = "❌ Disabled";
+"sample_okta_info_enabled" = "📝 Okta ID step will appear after document scan";
+"sample_okta_info_disabled" = "⏭️ Okta ID step will be skipped";
+"sample_last_result" = "📋 Last Result";
+"sample_fcm_status" = "🔥 FCM Token Status";
+"sample_cert_status" = "🔐 Client Certificate Status";
+"sample_member_status" = "👤 Member ID Status";
+"sample_theme_preview" = "🎨 Current Theme Preview";
+"sample_status_label" = "Status:";
+"sample_token_label" = "Token:";
+"sample_id_label" = "ID:";
+"sample_primary_color" = "Primary";
+"sample_secondary_color" = "Secondary";
+"sample_background_color" = "Background";
+"sample_new_verification" = "New Verification";
+"sample_view_details" = "View Details";
+"sample_authentication_result" = "Authentication Result";
+"sample_authentication_complete" = "Authentication Complete";
+"sample_approval_request_result" = "Approval Request Result";
+"sample_response" = "Response";
+
+/* Settings View */
+"settings_imageOverrides_description" = "Image overrides allow you to customize icons, buttons, logos, and status indicators throughout the SDK flows.";
+"settings_config_info" = "Configuration Info";
+"settings_client_id" = "Client ID/Group ID";
+"settings_account_number" = "Account Number";
+"settings_fcm_token" = "FCM Token";
+"settings_apn_token" = "APN Token";
+"settings_device_id" = "Device ID";
+"settings_system_info" = "System Information";
+"settings_sdk_version" = "SDK Version";
+"settings_app_version" = "App Version";
+"settings_certificate" = "Certificate";
+"settings_status" = "Status";
+"settings_loaded_date" = "Loaded Date";
+"settings_device" = "Device";
+"settings_model" = "Model";
+"settings_ios_version" = "iOS Version";
+"settings_app_info" = "App Information";
+
+/* Status Messages */
+"language_changed" = "Language changed";
+"theme_changed" = "Theme applied";

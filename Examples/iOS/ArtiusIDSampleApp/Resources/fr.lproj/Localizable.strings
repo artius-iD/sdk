@@ -1,0 +1,92 @@
+/*
+  Localizable.strings
+  ArtiusID Sample App
+  
+  French localization
+*/
+
+/* Settings & UI */
+"settings_language" = "Langue";
+"settings_theme" = "Thème";
+"settings_title" = "Paramètres";
+"settings_environment" = "Environnement";
+"settings_imageOverrides" = "Remplacements d'Image";
+"language_english" = "English";
+"language_spanish" = "Español";
+"language_french" = "Français";
+
+/* Theme Names */
+"theme_artiusid" = "artius.iD (Par défaut)";
+"theme_dark" = "Mode Sombre";
+"theme_corporate" = "Corporatif";
+"theme_banking" = "Thème Bancaire";
+"theme_fintech" = "Thème FinTech";
+
+/* Environment */
+"env_sandbox" = "Sandbox";
+"env_development" = "Développement";
+"env_staging" = "Mise en Scène";
+"env_production" = "Production";
+
+/* Sample App Specific */
+"sample_verification" = "🔍 Commencer la Vérification";
+"sample_authentication" = "🔐 Commencer l'Authentification";
+"sample_approval" = "📋 Tester le Processus d'Approbation";
+"sample_demo_flows" = "Flux de Démonstration";
+"sample_language_selection" = "🌍 Sélection de Langue";
+"sample_done" = "Fait";
+"sample_auth_request" = "🔐 Tester la Demande d'Authentification";
+"sample_clear_credentials" = "🚨 Effacer TOUS les Identifiants";
+"sample_refresh_fcm" = "🔥 Actualiser le Jeton FCM";
+"sample_header_title" = "Démonstration du SDK artius.iD";
+"sample_header_subtitle" = "Vérification d'identité sécurisée et authentification";
+"sample_theme_selection" = "🎨 Sélection du Thème";
+"sample_image_override" = "🖼️ Sélection du Remplacement d'Image";
+"sample_environment_config" = "🌐 Configuration de l'Environnement et du Domaine";
+"sample_okta_config" = "🔐 Configuration de l'Okta ID";
+"sample_environment_label" = "Environnement :";
+"sample_okta_collection" = "Collecte d'Okta ID :";
+"sample_okta_enabled" = "✅ Activé";
+"sample_okta_disabled" = "❌ Désactivé";
+"sample_okta_info_enabled" = "📝 L'étape Okta ID apparaîtra après l'analyse du document";
+"sample_okta_info_disabled" = "⏭️ L'étape Okta ID sera ignorée";
+"sample_last_result" = "📋 Dernier Résultat";
+"sample_fcm_status" = "🔥 État du Jeton FCM";
+"sample_cert_status" = "🔐 État du Certificat Client";
+"sample_member_status" = "👤 État de l'ID de Membre";
+"sample_theme_preview" = "🎨 Aperçu du Thème Actuel";
+"sample_status_label" = "État :";
+"sample_token_label" = "Jeton :";
+"sample_id_label" = "ID :";
+"sample_primary_color" = "Primaire";
+"sample_secondary_color" = "Secondaire";
+"sample_background_color" = "Arrière-plan";
+"sample_new_verification" = "Nouvelle Vérification";
+"sample_view_details" = "Afficher les Détails";
+"sample_authentication_result" = "Résultat de l'Authentification";
+"sample_authentication_complete" = "Authentification Terminée";
+"sample_approval_request_result" = "Résultat de la Demande d'Approbation";
+"sample_response" = "Réponse";
+
+/* Settings View */
+"settings_imageOverrides_description" = "Les remplacements d'image vous permettent de personnaliser les icônes, les boutons, les logos et les indicateurs d'état dans tous les flux du SDK.";
+"settings_config_info" = "Informations de Configuration";
+"settings_client_id" = "ID Client/ID Groupe";
+"settings_account_number" = "Numéro de Compte";
+"settings_fcm_token" = "Jeton FCM";
+"settings_apn_token" = "Jeton APN";
+"settings_device_id" = "ID Appareil";
+"settings_system_info" = "Informations Système";
+"settings_sdk_version" = "Version du SDK";
+"settings_app_version" = "Version de l'App";
+"settings_certificate" = "Certificat";
+"settings_status" = "Statut";
+"settings_loaded_date" = "Date de Chargement";
+"settings_device" = "Appareil";
+"settings_model" = "Modèle";
+"settings_ios_version" = "Version iOS";
+"settings_app_info" = "Informations de l'Application";
+
+/* Status Messages */
+"language_changed" = "Langue modifiée";
+"theme_changed" = "Thème appliqué";

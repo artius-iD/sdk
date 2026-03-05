@@ -71,6 +71,41 @@ dependencies: [
 
 ---
 
+## 🎯 Example Application
+
+A complete iOS sample application demonstrating SDK integration is included in the repository:
+
+### Running the Sample App
+
+```bash
+git clone https://github.com/artius-iD/sdk
+cd sdk/Examples/iOS
+open ../../artiusid-sdk-ios/artiusid-sdk-ios.xcodeproj
+```
+
+Select **"artius.iD Sample App"** scheme and press ⌘R to run.
+
+### What's Demonstrated
+
+The sample app showcases:
+- ✅ Identity verification flow with face scan + ID verification
+- ✅ Biometric authentication for returning users
+- ✅ Push notification handling (Firebase Cloud Messaging)
+- ✅ Theme customization with 5 pre-configured themes
+- ✅ Multi-language support (English, Spanish, French)
+- ✅ Environment switching (Dev, Staging, Production, Sandbox, QA)
+- ✅ Error handling and document recapture flows
+
+### Setup Requirements
+
+Before running the sample app:
+1. Replace `GoogleService-Info.plist` with your Firebase project configuration
+2. Update `clientId` in the app settings
+
+For complete setup instructions, see [Examples/iOS/README.md](Examples/iOS/README.md).
+
+---
+
 ## ⚡ Quick Start
 
 ### 1. Import the SDK
