@@ -23,14 +23,40 @@ This sample app showcases:
 
 ## 🚀 Setup Instructions
 
-### 1. Clone Repository
+### Option 1: Using Swift Package Manager (Public Users)
+
+If you cloned the GitHub repository, use this approach:
 
 ```bash
-git clone https://github.com/artius-iD/sdk
-cd sdk/Examples/iOS
+cd Examples/iOS
+swift package resolve
+open -a Xcode .
 ```
 
-### 2. Configure Firebase
+**What happens:**
+- SPM automatically downloads the binary SDK from GitHub releases
+- Xcode opens the sample app as an SPM package
+- Select build scheme and run
+
+### Option 2: Using Xcode Workspace (Contributors/Internal Users)
+
+If you have access to both the SDK source and sample app:
+
+```bash
+cd ..
+open ../../artiusid-sdk-ios/artiusid-sdk-ios.xcodeproj
+```
+
+**What happens:**
+- Opens the workspace with SDK source + sample app
+- Sample app builds against local SDK source
+- Good for understanding SDK internals or contributing
+
+---
+
+## 🔧 Before Running the App
+
+### 1. Configure Firebase
 
 The sample app requires Firebase for push notifications:
 
@@ -41,57 +67,43 @@ The sample app requires Firebase for push notifications:
 
 ⚠️ **Note:** The included `GoogleService-Info.plist` contains placeholder values. The app will build but push notifications won't work without a valid configuration.
 
-### 3. Open Project
+### 2. Update Client Credentials
 
-```bash
-# Option 1: Open via command line
-open ../../artiusid-sdk-ios/artiusid-sdk-ios.xcodeproj
+In `ArtiusIDSampleApp/SampleApp.swift`, find the verification configuration and update:
 
-# Option 2: Open via Xcode
-# File > Open > Navigate to artiusid-sdk-ios.xcodeproj
+```swift
+ArtiusIDVerificationView.Configuration(
+    clientId: YOUR_CLIENT_ID,  // Replace with your actual client ID
+    environment: .staging
+)
 ```
 
-### 4. Select Scheme
+Get your `clientId` from artius.iD support: support@artiusid.dev
 
-In Xcode, select **"artius.iD Sample App"** from the scheme dropdown (top-left, next to Run button).
+### 3. Build & Run
 
-### 5. Run
+Press **⌘R** in Xcode or:
 
-Press **⌘R** or click the **Run** button.
+```bash
+xcodebuild -scheme "artius.iD Sample App" -destination "generic/platform=iOS"
+```
 
 ## 🎨 Key Features Demo
 
-### Verification Flow
-Launch verification with face scan + ID document:
-```swift
-ArtiusIDVerificationView(
-    configuration: .init(
-        clientId: 12345,
-        environment: .staging,
-        preferredDocumentType: .passport
-    ),
-    onCompletion: { result in
-        print("Verified: \(result.accountNumber)")
-    }
-)
-```
+### Verify a User
+Navigate to the Verification tab and tap "Start Verification". The app will:
+1. Launch the verification view
+2. Prompt for face scan
+3. Request government ID photo/scan
+4. Display verification result
 
-### Authentication Flow
-Biometric authentication for returning users:
-```swift
-ArtiusIDAuthenticationView(
-    configuration: .init(
-        accountNumber: "user-account-123",
-        environment: .staging
-    ),
-    onCompletion: { result in
-        print("Authenticated: \(result.accountNumber)")
-    }
-)
-```
+### Authenticate a User
+Navigate to the Authentication tab and tap "Start Authentication". The app will:
+1. Use biometric/passcode authentication
+2. Display authentication result
 
-### Theme Customization
-See `Theme/SampleAppThemes.swift` for 5 pre-configured themes:
+### Customize the Theme
+Go to Settings → Theme and select from:
 - artius.iD Default (system colors)
 - Dark Theme
 - Corporate Blue
@@ -113,43 +125,50 @@ ArtiusIDSampleApp/
 │   ├── EnvironmentConfig.swift  # Environment definitions
 │   └── SampleImageOverrides.swift # Custom image assets
 ├── Theme/
-│   └── SampleAppThemes.swift    # Theme configurations
+│   └── SampleAppThemes.swift    # 5 theme configurations
 ├── Services/
 │   └── SampleFirebaseMessagingService.swift # FCM delegate
 └── GoogleService-Info.plist     # Firebase config (placeholder)
 ```
 
-## 🔧 Configuration
+## 🔧 Configuration Files
 
-### Update Client Credentials
-
-In `Views/SampleAppView.swift`, update the verification configuration:
-
+### AppPreferences.swift
+Type-safe wrapper for UserDefaults. Store and retrieve app settings:
 ```swift
-ArtiusIDVerificationView.Configuration(
-    clientId: YOUR_CLIENT_ID,  // Get from artius.iD support
-    environment: .staging
-)
+AppPreferences.set("en", forKey: .appLanguage)
+let language = AppPreferences.get(forKey: .appLanguage)
 ```
 
-### Change Environment
+### EnvironmentConfig.swift
+Defines available SDK environments:
+```swift
+case development, staging (default), production, sandbox, qa
+```
 
-Use Settings → Environment to switch between:
-- Development
-- Staging (default)
-- Production
-- Sandbox
-- QA
-
-### Customize Theme
-
-Access Settings → Theme to try different visual styles or modify `Theme/SampleAppThemes.swift` to create custom themes.
+### SampleAppThemes.swift
+5 complete theme definitions. Customize colors and fonts:
+```swift
+ThemeOption.artiusDefault    // System-based colors
+ThemeOption.darkTheme        // Dark mode
+ThemeOption.corporateBlue    // Professional blue
+ThemeOption.highContrast     // Accessibility
+ThemeOption.minimal          // Clean & minimal
+```
 
 ## 🐛 Troubleshooting
 
 ### Build Errors
 
-**"Missing SDK" or package resolution fails:**
+**"Package resolution failed" or "SDK not found" (SPM users):**
+```bash
+# Clean and resolve again
+rm -rf .build .swiftpm
+swift package resolve
+open -a Xcode .
+```
+
+**"Missing SDK" or package resolution fails (Workspace users):**
 ```bash
 # Clean build folder
 cd ../../artiusid-sdk-ios
@@ -165,30 +184,30 @@ rm -rf .build build
 ### Runtime Issues
 
 **Firebase errors on launch:**
-- Verify `GoogleService-Info.plist` is valid (not the placeholder)
-- Check bundle ID matches Firebase project configuration
+- Ensure `GoogleService-Info.plist` is valid (not the placeholder)
+- Check bundle ID matches your Firebase project
 
 **Verification fails immediately:**
-- Ensure `clientId` matches your artius.iD credentials
+- Verify `clientId` is set correctly in SampleApp.swift
 - Check network connectivity
-- Verify selected environment is correct
+- Ensure selected environment is correct
 
 **Certificate errors:**
-- Check environment matches your registered certificates
-- Contact support for certificate provisioning
+- Check environment matches your SDK registration certificates
+- Contact support@artiusid.dev for certificate help
 
 ## 📚 Learn More
 
-- **Main Documentation:** [../README.md](../../README.md)
+- **Main SDK Documentation:** [../../README.md](../../README.md)
 - **API Reference:** See main README for complete SDK API documentation
-- **Theme Guide:** [THEMING_GUIDE.md](../../THEMING_GUIDE.md) (if available in docs/)
+- **Theme Guide:** [THEMING_GUIDE.md](../../THEMING_GUIDE.md) (in docs/)
 - **Changelog:** [CHANGELOG.md](../../CHANGELOG.md)
 
 ## 💬 Support
 
 - **Email:** support@artiusid.dev
-- **Issues:** [GitHub Issues](https://github.com/artius-iD/sdk/issues)
+- **GitHub Issues:** [Report an issue](https://github.com/artius-iD/sdk/issues)
 
 ## 📄 License
 
-See [LICENSE](../../LICENSE) for details.
+This sample application is provided as-is under the same license as the ArtiusID SDK.

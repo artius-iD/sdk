@@ -1,0 +1,21 @@
+# Xcode
+.DS_Store
+DerivedData/
+build/
+*.pbxuser
+*.xcuserstate
+xcuserdata/
+*.xcworkspace
+!ArtiusIDSampleApp.xcworkspace/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.pins
+Packages/
+
+# Generated artifacts (when building as SPM package)
+*.xcodeproj/
+.idea/
+*.swp
+*~
