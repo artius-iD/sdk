@@ -55,54 +55,108 @@ public final class ArtiusIDSDKDependencies {
 // Simple Keychain wrapper for FCM token storage and Okta ID
 public class Keychain {
     private let service: String
-    private let oktaIdKey = "oktaUserId"
+    private let securityQueue = DispatchQueue(label: "com.artiusid.sdk.keychain.security")
     public init(service: String = "com.artiusid.sdk") { self.service = service }
-    public func set(_ value: String, forKey key: String) -> Bool {
-        let data = value.data(using: .utf8)!
-        let query = [
-            kSecClass as String: kSecClassGenericPassword as String,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: key,
-            kSecValueData as String: data
-        ] as [String: Any]
-        SecItemDelete(query as CFDictionary)
-        return SecItemAdd(query as CFDictionary, nil) == errSecSuccess
-    }
-    public func get(forKey key: String) -> String? {
-        let query = [
+
+    private func baseQuery(forKey key: String) -> [String: Any] {
+        [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: key,
-            kSecReturnData as String: kCFBooleanTrue!,
-            kSecMatchLimit as String: kSecMatchLimitOne
-        ] as [String: Any]
-        var dataTypeRef: AnyObject? = nil
-        let status: OSStatus = SecItemCopyMatching(query as CFDictionary, &dataTypeRef)
-        if status == noErr {
-            return String(data: dataTypeRef as! Data, encoding: .utf8)
-        } else {
-            return nil
+            kSecAttrAccount as String: key
+        ]
+    }
+
+    public func set(_ value: String, forKey key: String) -> Bool {
+        guard !key.isEmpty, let data = value.data(using: .utf8) else {
+            return false
+        }
+
+        return securityQueue.sync {
+            var addQuery = baseQuery(forKey: key)
+            addQuery[kSecValueData as String] = data
+
+            let addStatus = SecItemAdd(addQuery as CFDictionary, nil)
+            if addStatus == errSecSuccess {
+                return true
+            }
+            guard addStatus == errSecDuplicateItem else {
+                return false
+            }
+
+            let updateQuery = baseQuery(forKey: key)
+            let attributesToUpdate: [String: Any] = [kSecValueData as String: data]
+            let updateStatus = SecItemUpdate(updateQuery as CFDictionary, attributesToUpdate as CFDictionary)
+            return updateStatus == errSecSuccess
         }
     }
-    public func delete(forKey key: String) -> Bool {
-        let query = [
-            kSecClass as String: kSecClassGenericPassword as String,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: key,
-        ] as [String: Any]
-        return SecItemDelete(query as CFDictionary) == errSecSuccess
+
+    public func get(forKey key: String) -> String? {
+        guard !key.isEmpty else {
+            return nil
+        }
+
+        return securityQueue.sync {
+            var query = baseQuery(forKey: key)
+            query[kSecReturnData as String] = true
+            query[kSecMatchLimit as String] = kSecMatchLimitOne
+
+            var result: CFTypeRef?
+            let status = SecItemCopyMatching(query as CFDictionary, &result)
+            guard status == errSecSuccess, let data = result as? Data else {
+                return nil
+            }
+            return String(data: data, encoding: .utf8)
+        }
     }
+
+    private func contains(_ key: String) -> Bool {
+        var query = baseQuery(forKey: key)
+        query[kSecReturnAttributes as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
+
+        let status = SecItemCopyMatching(query as CFDictionary, nil)
+        return status == errSecSuccess
+    }
+
+    public func delete(forKey key: String) -> Bool {
+        guard !key.isEmpty else {
+            return true
+        }
+
+        return securityQueue.sync {
+            // Skip delete when item does not exist to keep repeated calls idempotent.
+            guard contains(key) else {
+                return true
+            }
+
+            let query = baseQuery(forKey: key)
+            let status = SecItemDelete(query as CFDictionary)
+            return status == errSecSuccess || status == errSecItemNotFound
+        }
+    }
+
     // Helper for Okta ID (environment-specific)
     public func setOktaUserId(_ userId: String?, environment: String) {
-        let key = "oktaUserId_\(environment.lowercased())"
+        let normalizedEnvironment = environment.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !normalizedEnvironment.isEmpty else {
+            return
+        }
+
+        let key = "oktaUserId_\(normalizedEnvironment)"
         if let userId = userId, !userId.isEmpty {
             _ = set(userId, forKey: key)
         } else {
             _ = delete(forKey: key)
         }
     }
+
     public func getOktaUserId(environment: String) -> String? {
-        let key = "oktaUserId_\(environment.lowercased())"
+        let normalizedEnvironment = environment.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !normalizedEnvironment.isEmpty else {
+            return nil
+        }
+
+        let key = "oktaUserId_\(normalizedEnvironment)"
         return get(forKey: key)
     }
 }
@@ -159,12 +213,22 @@ public class ArtiusIDSDKWrapper {
             fatalError("ArtiusID SDK dependencies not properly configured")
         }
 
-        // Store Okta ID in keychain if provided
-        keychain.setOktaUserId(oktaUserId, environment: environment?.rawValue ?? "")
-        if let userId = oktaUserId, !userId.isEmpty {
-            logInfo("Okta user ID set and stored in keychain: \(userId.prefix(10))...", source: "ArtiusIDSDKWrapper")
+        // Persist Okta ID only when explicitly provided to avoid clearing on repeated configure calls.
+        if let providedOktaUserId = oktaUserId {
+            self.oktaUserId = providedOktaUserId.isEmpty ? nil : providedOktaUserId
+
+            if let env = environment?.rawValue, !env.isEmpty {
+                keychain.setOktaUserId(self.oktaUserId, environment: env)
+                if let userId = self.oktaUserId {
+                    logInfo("Okta user ID set and stored in keychain: \(userId.prefix(10))...", source: "ArtiusIDSDKWrapper")
+                } else {
+                    logInfo("Okta user ID cleared from keychain", source: "ArtiusIDSDKWrapper")
+                }
+            } else {
+                logWarning("Skipping Okta user ID keychain update because environment is missing", source: "ArtiusIDSDKWrapper")
+            }
         } else {
-            logInfo("Okta user ID cleared from keychain", source: "ArtiusIDSDKWrapper")
+            logDebug("No Okta user ID provided during configure; preserving existing keychain value", source: "ArtiusIDSDKWrapper")
         }
 
         // Set wrapper-level logging
@@ -175,7 +239,6 @@ public class ArtiusIDSDKWrapper {
         }
 
         configureFirebaseIfAvailable()
-        self.oktaUserId = oktaUserId
         self.environment = environment
         logDebug("Configuration:", source: "ArtiusIDSDKWrapper")
         logDebug("  Environment: \(String(describing: environment))", source: "ArtiusIDSDKWrapper")
@@ -333,8 +396,8 @@ public class ArtiusIDSDKWrapper {
 
 // SDK Information and utilities
 public struct ArtiusIDSDKInfo {
-    public static let version = "2.0.143"
-    public static let wrapperVersion = "2.0.143"
+    public static let version = "2.0.144"
+    public static let wrapperVersion = "2.0.144"
     public static let build = "iOS Universal Binary (Device + Simulator)"
     public static let architecture = "iOS (arm64 + x86_64)"
     public static func printInfo() {
