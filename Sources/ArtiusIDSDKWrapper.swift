@@ -114,6 +114,8 @@ public class ArtiusIDSDKWrapper {
     private var isFirebaseConfigured = false
     /// The Okta user ID explicitly set by the client app (preferred over keychain)
     private var oktaUserId: String?
+    /// The current environment configuration
+    private var environment: Environments?
     private init() {}
 
     // MARK: - Core SDK Interface
@@ -174,6 +176,7 @@ public class ArtiusIDSDKWrapper {
 
         configureFirebaseIfAvailable()
         self.oktaUserId = oktaUserId
+        self.environment = environment
         logDebug("Configuration:", source: "ArtiusIDSDKWrapper")
         logDebug("  Environment: \(String(describing: environment))", source: "ArtiusIDSDKWrapper")
         logDebug("  URL Template: \(urlTemplate)", source: "ArtiusIDSDKWrapper")
@@ -206,7 +209,7 @@ public class ArtiusIDSDKWrapper {
     /// Set or update the Okta user ID at runtime (preferred over keychain)
     public func setOktaUserId(_ userId: String?) {
         self.oktaUserId = userId
-        let env = ArtiusIDSDK.shared.environment.rawValue
+        let env = self.environment?.rawValue ?? ""
         keychain.setOktaUserId(userId, environment: env)
         logInfo("Okta user ID set explicitly: \(userId?.prefix(10) ?? "nil")...", source: "ArtiusIDSDKWrapper")
     }
@@ -217,7 +220,7 @@ public class ArtiusIDSDKWrapper {
             return explicit
         }
         // Fallback to keychain if not set
-        let env = environment ?? ArtiusIDSDK.shared.environment.rawValue
+        let env = environment ?? self.environment?.rawValue ?? ""
         return keychain.getOktaUserId(environment: env)
     }
 
@@ -330,8 +333,8 @@ public class ArtiusIDSDKWrapper {
 
 // SDK Information and utilities
 public struct ArtiusIDSDKInfo {
-    public static let version = "2.0.141"
-    public static let wrapperVersion = "2.0.141"
+    public static let version = "2.0.142"
+    public static let wrapperVersion = "2.0.142"
     public static let build = "iOS Universal Binary (Device + Simulator)"
     public static let architecture = "iOS (arm64 + x86_64)"
     public static func printInfo() {
