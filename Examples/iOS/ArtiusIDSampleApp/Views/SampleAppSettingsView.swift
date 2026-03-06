@@ -608,6 +608,7 @@ struct SampleAppSettingsView: View {
 struct SampleAppSettingsView_Previews: PreviewProvider {
     static var previews: some View {
         SampleAppSettingsView(viewModel: SampleAppViewModel())
+            .environmentObject(LanguageManager.shared)
     }
 }
 #endif
