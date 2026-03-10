@@ -250,7 +250,7 @@ struct SampleAppView: View {
     
     private var actionButtonsSection: some View {
         VStack(spacing: 16) {
-            // Start Verification Button - HARDCODED dark blue (matching Android)
+            // Start Verification Button - blue on landing page
             Button(action: {
                 logInfo("Start Verification button tapped", source: "SampleAppView")
                 verificationResult = nil
@@ -264,7 +264,7 @@ struct SampleAppView: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
-                    .background(primaryButtonColor)
+                    .background(Color(red: 0, green: 122/255.0, blue: 1)) // #007AFF blue
                     .cornerRadius(8)
             }
             
@@ -969,9 +969,13 @@ struct ViewControllerAccessor: UIViewControllerRepresentable {
 
 // MARK: - Preview
 
+#if DEBUG
 struct SampleAppView_Previews: PreviewProvider {
     static var previews: some View {
         SampleAppView()
+            .environmentObject(LanguageManager.shared)
+            .environmentObject(AppThemeManager.shared)
     }
 }
+#endif
 
