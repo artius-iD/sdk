@@ -30,6 +30,7 @@ public class SampleFirebaseMessagingService: NSObject, MessagingDelegate {
     // MARK: - Constants
     
     private let TAG = "SampleFCMService"
+    private let localRelayFlagKey = "artius_local_notification_relay"
     
     // MARK: - Properties
     
@@ -178,17 +179,34 @@ public class SampleFirebaseMessagingService: NSObject, MessagingDelegate {
     public func didReceiveNotification(userInfo: [AnyHashable: Any], completionHandler: @escaping () -> Void) {
         logInfo("FCM message received by sample app", source: "SampleFirebaseMessagingService")
         logDebug("FCM data payload: \(userInfo)", source: "SampleFirebaseMessagingService")
+
+        let isLocalRelayNotification = (userInfo[localRelayFlagKey] as? String) == "true"
         
         // Check if this is an approval notification
         let approvalTitle = userInfo["approvalTitle"] as? String
         let approvalDescription = userInfo["approvalDescription"] as? String
         let requestId = userInfo["requestId"] as? String
+
+        // Check if this is a binding notification
+        let bindingSessionId = userInfo["sessionId"] as? String
+        let bindingTitle = userInfo["bindingTitle"] as? String
+        let bindingDescription = userInfo["bindingDescription"] as? String
         
         if let title = approvalTitle, let description = approvalDescription {
             logInfo("[\(TAG)] Approval notification detected", source: "SampleFirebaseMessagingService")
             logDebug("[\(TAG)] Title: \(title)", source: "SampleFirebaseMessagingService")
             logDebug("[\(TAG)] Description: \(description)", source: "SampleFirebaseMessagingService")
             logDebug("[\(TAG)] Request ID: \(requestId ?? "N/A")", source: "SampleFirebaseMessagingService")
+
+            if !isLocalRelayNotification,
+               shouldRelayAsLocalNotification(userInfo: userInfo) {
+                scheduleLocalNotification(
+                    userInfo: userInfo,
+                    title: title,
+                    body: description,
+                    identifier: "approval-\(requestId ?? UUID().uuidString)"
+                )
+            }
             
             // Parse requestId to Int
             let requestIdInt = requestId.flatMap { Int($0) }
@@ -201,6 +219,33 @@ public class SampleFirebaseMessagingService: NSObject, MessagingDelegate {
             )
             
             logInfo("[\(TAG)] AppNotificationState updated - show approval screen", source: "SampleFirebaseMessagingService")
+        } else if let sessionId = bindingSessionId {
+            let fallbackTitle = bindingTitle ?? "Binding Request"
+            let fallbackDescription = bindingDescription ?? "Scan the QR code and confirm binding."
+            let requestIdInt = requestId.flatMap { Int($0) }
+
+            logInfo("[\(TAG)] Binding notification detected", source: "SampleFirebaseMessagingService")
+            logDebug("[\(TAG)] Session ID: \(sessionId)", source: "SampleFirebaseMessagingService")
+            logDebug("[\(TAG)] Request ID: \(requestId ?? "N/A")", source: "SampleFirebaseMessagingService")
+
+            if !isLocalRelayNotification,
+               shouldRelayAsLocalNotification(userInfo: userInfo) {
+                scheduleLocalNotification(
+                    userInfo: userInfo,
+                    title: fallbackTitle,
+                    body: fallbackDescription,
+                    identifier: "binding-\(sessionId)"
+                )
+            }
+
+            ArtiusID.AppNotificationState.shared.handleBindingNotification(
+                sessionId: sessionId,
+                requestId: requestIdInt,
+                title: fallbackTitle,
+                description: fallbackDescription
+            )
+
+            logInfo("[\(TAG)] AppNotificationState updated - show binding screen", source: "SampleFirebaseMessagingService")
         }
         
         completionHandler()
@@ -220,6 +265,60 @@ public class SampleFirebaseMessagingService: NSObject, MessagingDelegate {
         if let token = keychain.getFCMToken(for: currentEnvironment) {
             currentToken = token
             provideTokenToSDK(token)
+        }
+    }
+
+    private func shouldRelayAsLocalNotification(userInfo: [AnyHashable: Any]) -> Bool {
+        guard let aps = userInfo["aps"] as? [String: Any] else {
+            return true
+        }
+
+        if let alert = aps["alert"] as? [String: Any] {
+            let hasTitle = (alert["title"] as? String)?.isEmpty == false
+            let hasBody = (alert["body"] as? String)?.isEmpty == false
+            return !(hasTitle || hasBody)
+        }
+
+        if let alertText = aps["alert"] as? String {
+            return alertText.isEmpty
+        }
+
+        return true
+    }
+
+    private func scheduleLocalNotification(
+        userInfo: [AnyHashable: Any],
+        title: String,
+        body: String,
+        identifier: String
+    ) {
+        var relayUserInfo = userInfo
+        relayUserInfo[localRelayFlagKey] = "true"
+
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+        content.userInfo = relayUserInfo
+
+        if let aps = userInfo["aps"] as? [String: Any],
+           let category = aps["category"] as? String,
+           !category.isEmpty {
+            content.categoryIdentifier = category
+        }
+
+        let request = UNNotificationRequest(
+            identifier: identifier,
+            content: content,
+            trigger: nil
+        )
+
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error {
+                logError("[\(self.TAG)] Failed to schedule local relay notification: \(error.localizedDescription)", source: "SampleFirebaseMessagingService")
+            } else {
+                logInfo("[\(self.TAG)] Scheduled local relay notification for data-only push", source: "SampleFirebaseMessagingService")
+            }
         }
     }
 }

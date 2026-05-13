@@ -153,8 +153,10 @@ struct SampleApp: App {
         FirebaseApp.configure()
         logInfo("Firebase configured", source: "SampleApp")
         
+        // App-level initialization
         setupAppearance()
-        Self.runDeferredConfiguration()
+        configureSDK()
+        configureLocalization()
     }
     
     var body: some Scene {
@@ -173,12 +175,7 @@ struct SampleApp: App {
         logInfo("Setting up app appearance", source: "SampleApp")
     }
     
-    private static func runDeferredConfiguration() {
-        configureSDK()
-        configureLocalization()
-    }
-    
-    private static func configureSDK() {
+    private func configureSDK() {
         // Initialize SDK managers early to prevent initialization issues
         logInfo("Initializing SDK managers", source: "SampleApp")
         
@@ -197,7 +194,7 @@ struct SampleApp: App {
         logInfo("SDK configuration ready", source: "SampleApp")
     }
     
-    private static func configureLocalization() {
+    private func configureLocalization() {
         // Sync app language with SDK's LocalizationManager
         let currentLanguage = LanguageManager.shared.currentLanguage
         artiusid_sdk_ios.LocalizationManager.shared.setLocale(Locale(identifier: currentLanguage))
@@ -209,7 +206,7 @@ struct SampleApp: App {
 
 /// AppDelegate for handling APNs registration and notifications
 /// Matches Android's SampleApplication architecture
-class AppDelegate: NSObject, UIApplicationDelegate {
+class AppDelegate: UIResponder, UIApplicationDelegate {
     
     func application(_ application: UIApplication,
                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {

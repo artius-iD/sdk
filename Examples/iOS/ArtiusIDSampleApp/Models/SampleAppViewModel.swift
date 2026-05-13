@@ -147,6 +147,13 @@ class SampleAppViewModel: ObservableObject {
             ImageOverrideManager.shared.clearOverrides()
             logInfo("Cleared image overrides - using SDK defaults", source: "SampleAppViewModel")
         }
+
+        // Ensure SDK runtime environment matches the persisted app selection on launch.
+        let config = EnvironmentConfig.configForEnvironment(currentEnvironment)
+        _ = config.toSDKConfiguration(
+            includeOktaIDInVerificationPayload: isOktaIdEnabled
+        )
+        logInfo("Applied SDK environment configuration: \(currentEnvironment.displayName)", source: "SampleAppViewModel")
         
         isSDKInitialized = true
         logInfo("SDK initialized successfully", source: "SampleAppViewModel")

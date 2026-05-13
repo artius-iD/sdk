@@ -34,6 +34,7 @@ struct SampleAppView: View {
     @State private var showingVerification = false
     @State private var showingAuthentication = false
     @State private var showingApproval = false
+    @State private var showingBinding = false
     @State private var showingSettings = false
     
     // Result tracking states
@@ -42,7 +43,8 @@ struct SampleAppView: View {
     @State private var authenticationResult: String? = nil
     @State private var isAuthenticationComplete = false
     @State private var approvalResult: String? = nil
-    @State private var lastActionType: String = "" // "verification", "authentication", "approval", "clear", "fcm"
+    @State private var bindingResult: String? = nil
+    @State private var lastActionType: String = "" // "verification", "authentication", "approval", "binding", "clear", "fcm"
 
     private var selectedSDKEnvironment: ArtiusIDVerificationView.ArtiusIDEnvironment {
         switch viewModel.currentEnvironment {
@@ -73,6 +75,8 @@ struct SampleAppView: View {
                             authenticationResultsSection(result)
                         } else if lastActionType == "approval" {
                             approvalResultCard
+                        } else if lastActionType == "binding" {
+                            bindingResultCard
                         } else if lastActionType == "clear" || lastActionType == "fcm" {
                             lastResultCard
                         }
@@ -115,27 +119,6 @@ struct SampleAppView: View {
                         }
                     )
                 }
-                .fullScreenCover(isPresented: $showingApproval) {
-                    // SDK Public API: Approval View
-                    ArtiusID.ApprovalView(
-                        onCompletion: { result in
-                            lastActionType = "approval"
-                            approvalResult = String(describing: result)
-                            // Step 2: Show the actual response (approval or declination)
-                            let responseMessage = String(describing: result)
-                            viewModel.lastResult = responseMessage
-                            logInfo("Approval response received: \(result)", source: "SampleAppView")
-                            showingApproval = false
-                            appNotificationState.reset()
-                        },
-                        onCancel: {
-                            logInfo("Approval cancelled", source: "SampleAppView")
-                            showingApproval = false
-                            appNotificationState.reset()
-                        }
-                    )
-                    .environmentObject(appNotificationState)
-                }
         }
         .fullScreenCover(isPresented: $showingAuthentication) {
             // SDK Public API: Authentication View
@@ -170,6 +153,46 @@ struct SampleAppView: View {
             )
         }
         }
+        .fullScreenCover(isPresented: $showingApproval) {
+            // SDK Public API: Approval View
+            ArtiusID.ApprovalView(
+                onCompletion: { result in
+                    lastActionType = "approval"
+                    approvalResult = String(describing: result)
+                    let responseMessage = String(describing: result)
+                    viewModel.lastResult = responseMessage
+                    logInfo("Approval response received: \(result)", source: "SampleAppView")
+                    showingApproval = false
+                    appNotificationState.reset()
+                },
+                onCancel: {
+                    logInfo("Approval cancelled", source: "SampleAppView")
+                    showingApproval = false
+                    appNotificationState.reset()
+                }
+            )
+            .environmentObject(appNotificationState)
+        }
+        .fullScreenCover(isPresented: $showingBinding) {
+            ArtiusID.BindingView(
+                onCompletion: { result in
+                    lastActionType = "binding"
+                    let requestIdText = result.requestId?.description ?? "nil"
+                    let sessionIdText = result.sessionId ?? "nil"
+                    bindingResult = "decision=\(result.decision), requestId=\(requestIdText), sessionId=\(sessionIdText), capturedTime=\(result.capturedTime), success=\(result.isSuccessful)"
+                    viewModel.lastResult = bindingResult ?? ""
+                    logInfo("Binding response received: \(result.decision)", source: "SampleAppView")
+                    showingBinding = false
+                    appNotificationState.reset()
+                },
+                onCancel: {
+                    logInfo("Binding cancelled", source: "SampleAppView")
+                    showingBinding = false
+                    appNotificationState.reset()
+                }
+            )
+            .environmentObject(appNotificationState)
+        }
         .sheet(isPresented: $showingSettings) {
             SampleAppSettingsView(viewModel: viewModel)
                 .environmentObject(languageManager)
@@ -183,6 +206,10 @@ struct SampleAppView: View {
                 logInfo("Opening approval screen for notification", source: "SampleAppView")
                 applySelectedSDKTheme()
                 showingApproval = true
+            case .binding:
+                logInfo("Opening binding screen for notification", source: "SampleAppView")
+                applySelectedSDKTheme()
+                showingBinding = true
             case .default:
                 logInfo("Default notification state", source: "SampleAppView")
             @unknown default:
@@ -250,7 +277,7 @@ struct SampleAppView: View {
     
     private var actionButtonsSection: some View {
         VStack(spacing: 16) {
-            // Start Verification Button - blue on landing page
+            // Start Verification Button - HARDCODED dark blue (matching Android)
             Button(action: {
                 logInfo("Start Verification button tapped", source: "SampleAppView")
                 verificationResult = nil
@@ -264,7 +291,7 @@ struct SampleAppView: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
-                    .background(Color(red: 0, green: 122/255.0, blue: 1)) // #007AFF blue
+                    .background(primaryButtonColor)
                     .cornerRadius(8)
             }
             
@@ -327,6 +354,7 @@ struct SampleAppView: View {
                 authenticationResult = nil
                 isAuthenticationComplete = false
                 approvalResult = nil
+                bindingResult = nil
                 appNotificationState.reset()
                 viewModel.clearAllCredentials()
             }) {
@@ -459,6 +487,25 @@ struct SampleAppView: View {
                             .foregroundColor(textColor)
 
                         Text(getApprovalDisplayValue(result))
+                            .font(.body)
+                            .foregroundColor(textColor)
+                            .padding(8)
+                    }
+                }
+            }
+        }
+    }
+
+    private var bindingResultCard: some View {
+        Group {
+            if let result = bindingResult, !result.isEmpty {
+                CardView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Binding Request Result")
+                            .font(.headline)
+                            .foregroundColor(textColor)
+
+                        Text(result)
                             .font(.body)
                             .foregroundColor(textColor)
                             .padding(8)
@@ -969,13 +1016,9 @@ struct ViewControllerAccessor: UIViewControllerRepresentable {
 
 // MARK: - Preview
 
-#if DEBUG
 struct SampleAppView_Previews: PreviewProvider {
     static var previews: some View {
         SampleAppView()
-            .environmentObject(LanguageManager.shared)
-            .environmentObject(AppThemeManager.shared)
     }
 }
-#endif
 

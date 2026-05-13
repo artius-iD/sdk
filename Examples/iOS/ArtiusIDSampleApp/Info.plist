@@ -30,6 +30,8 @@
 	<string>ArtiusID Sample App uses Face ID for biometric authentication.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>ArtiusID Sample App needs photo library access to save verification images.</string>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<false/>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
