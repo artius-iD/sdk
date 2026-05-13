@@ -10,107 +10,15 @@ import Foundation
 import SwiftUI
 import artiusid_sdk_ios
 
-/// Sample theme configurations - MATCHING Android SDK exactly
+/// Sample theme configurations. artius.iD default uses SDK/reference-app colors (dark blue, orange).
 public struct SampleAppThemes {
     
-    // MARK: - artius.iD Default Theme (MATCHING Android)
+    // MARK: - artius.iD Default Theme
     
-    /// artius.iD Default Theme - Using system colors from DefaultTheme
-    public static let ARTIUSID_DEFAULT = EnhancedSDKThemeConfiguration(
-        brandName: "artius.iD",
-        
-        typography: SDKTypography(
-            headlineLarge: 32,
-            headlineMedium: 28,
-            titleLarge: 22,
-            bodyLarge: 16,
-            bodyMedium: 14,
-            headlineWeight: "bold",
-            titleWeight: "medium",
-            bodyWeight: "normal"
-        ),
-        
-        colorScheme: SDKColorScheme(
-            // Primary colors from DefaultTheme - using system colors
-            primaryColorHex: "#000000",        // .primary text color
-            secondaryColorHex: "#007AFF",     // .blue for icons and navigation
-            backgroundColorHex: "#FFFFFF",    // systemBackground
-            surfaceColorHex: "#F2F2F7",       // secondarySystemBackground
-            onPrimaryColorHex: "#FFFFFF",     // White text on dark background
-            onSecondaryColorHex: "#FFFFFF",   // White text on blue background
-            onBackgroundColorHex: "#000000",  // Dark text on white background
-            onSurfaceColorHex: "#000000",     // Dark text on light surface
-            successColorHex: "#34C759",       // .green
-            errorColorHex: "#FF3B30",         // .red
-            warningColorHex: "#FF9500",       // .orange
-            // Button colors using secondary (blue)
-            primaryButtonColorHex: "#007AFF",     // Blue button
-            primaryButtonTextColorHex: "#FFFFFF", // White text
-            secondaryButtonColorHex: "#F2F2F7",   // Light gray button
-            secondaryButtonTextColorHex: "#000000" // Dark text
-        ),
-        
-        iconTheme: SDKIconThemeConfig(
-            iconStyle: "filled",
-            mediumIconSize: 24,
-            // Core icon colors from DefaultTheme
-            primaryIconColorHex: "#007AFF",     // .blue
-            secondaryIconColorHex: "#3C3C43",   // .secondary
-            accentIconColorHex: "#007AFF",      // .accentColor (blue)
-            disabledIconColorHex: "#ADB5BD",    // .gray
-            
-            // Navigation & UI Icons from DefaultTheme
-            navigationIconColorHex: "#007AFF",  // .blue
-            actionIconColorHex: "#007AFF",      // .blue
-            
-            // Instruction & Guide Icons
-            instructionIconColorHex: "#FF9500", // .orange
-            warningIconColorHex: "#FF9500",     // .orange
-            errorIconColorHex: "#FF3B30",       // .red
-            successIconColorHex: "#34C759",     // .green
-            
-            // Document & Verification Icons
-            documentIconColorHex: "#007AFF",    // .blue
-            cameraIconColorHex: "#007AFF",      // .blue
-            scanIconColorHex: "#AF52DE",        // .purple
-            
-            // Biometric & Security Icons
-            biometricIconColorHex: "#34C759",   // .green
-            securityIconColorHex: "#007AFF",    // .blue
-            nfcIconColorHex: "#30B0C0",         // .teal
-            
-            // Status Icons
-            statusActiveIconColorHex: "#34C759",    // .green
-            statusInactiveIconColorHex: "#ADB5BD", // .gray
-            statusProcessingIconColorHex: "#FF9500" // .orange
-        ),
-        
-        textContent: SDKTextContent(
-            welcomeTitle: "artius.iD Verification",
-            welcomeSubtitle: "Secure identity verification powered by artius.iD",
-            documentScanTitle: "Scan Your ID",
-            passportScanTitle: "Scan Your Passport",
-            faceScanTitle: "Face Verification",
-            processingTitle: "Processing",
-            verificationSuccessTitle: "Verification Complete"
-        ),
-        
-        componentStyling: SDKComponentStyling(
-            buttonCornerRadius: 12,
-            cardCornerRadius: 12,
-            buttonHeight: 48
-        ),
-        
-        layoutConfig: SDKLayoutConfig(
-            screenPadding: 16,
-            componentSpacing: 16
-        ),
-        
-        animationConfig: SDKAnimationConfig(
-            mediumAnimationDuration: 300,
-            pageTransitionStyle: "slide"
-        )
-    )
+    /// artius.iD Default Theme – matches SDK and reference app (dark blue #22354D, orange #F58220).
+    public static var ARTIUSID_DEFAULT: EnhancedSDKThemeConfiguration {
+        EnhancedSDKThemeConfiguration.artiusIDDefault
+    }
     
     // MARK: - Corporate Blue Theme
     
@@ -194,7 +102,7 @@ public enum ThemeOption: String, CaseIterable, Identifiable {
     public var themeConfig: EnhancedSDKThemeConfiguration {
         switch self {
         case .artiusDefault:
-            return SampleAppThemes.ARTIUSID_DEFAULT
+            return EnhancedSDKThemeConfiguration.artiusIDDefault
         case .corporateBlue:
             return SampleAppThemes.CORPORATE_BLUE
         case .darkTheme:
