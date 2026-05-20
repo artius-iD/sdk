@@ -67,6 +67,20 @@
 "sample_authentication_complete" = "Authentication Complete";
 "sample_approval_request_result" = "Approval Request Result";
 "sample_response" = "Response";
+"sample_ok" = "OK";
+"sample_feature_settings_title" = "Feature Settings";
+"sample_login_features_title" = "Login Features";
+"sample_enable_okta_id" = "Enable Okta ID";
+"sample_okta_collection_description" = "Collect Okta ID in the verification flow";
+"sample_enable_third_party_login" = "Enable Third-Party Login";
+"sample_third_party_login_description" = "Require additional credentials after verification";
+"sample_disable_other_first_okta" = "Third-party login is enabled. Disable it first to enable Okta ID.";
+"sample_disable_other_first_third_party" = "Okta ID is enabled. Disable it first to enable third-party login.";
+"sample_clear_okta_id" = "Clear Okta ID";
+"sample_clear_third_party_login" = "Clear Third-Party Login";
+"sample_okta_cleared_message" = "Okta ID cleared for %@.";
+"sample_third_party_cleared_message" = "Third-party login ID cleared for %@.";
+"sample_third_party_login_complete" = "Third-party login complete for %@";
 
 /* Settings View */
 "settings_imageOverrides_description" = "Image overrides allow you to customize icons, buttons, logos, and status indicators throughout the SDK flows.";

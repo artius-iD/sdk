@@ -33,6 +33,7 @@ struct SampleAppSettingsView: View {
     @State private var showingInfoSheet = false
     @State private var isEnvironmentUnlocked = false
     @State private var copyToastMessage: String?
+    @State private var loginFeatureAlertMessage: String?
     
     var body: some View {
         NavigationView {
@@ -44,6 +45,9 @@ struct SampleAppSettingsView: View {
                 if isEnvironmentUnlocked {
                     environmentSection
                 }
+
+                // Login Features Section
+                loginFeaturesSection
                 
                 // Theme Preview Section
                 themePreviewSection
@@ -92,6 +96,21 @@ struct SampleAppSettingsView: View {
             }
             .sheet(isPresented: $showingInfoSheet) {
                 infoSheetView
+            }
+            .alert(
+                languageManager.localize("sample_feature_settings_title"),
+                isPresented: Binding(
+                    get: { loginFeatureAlertMessage != nil },
+                    set: { isPresented in
+                        if !isPresented {
+                            loginFeatureAlertMessage = nil
+                        }
+                    }
+                )
+            ) {
+                Button(languageManager.localize("sample_ok"), role: .cancel) {}
+            } message: {
+                Text(loginFeatureAlertMessage ?? "")
             }
             .overlay(
                 Group {
@@ -176,6 +195,67 @@ struct SampleAppSettingsView: View {
             Text(viewModel.currentEnvironment.description)
                 .font(.caption)
                 .foregroundColor(themeSecondaryTextColor)
+        }
+        .listRowBackground(themeListRowColor)
+    }
+
+    // MARK: Login Features Section
+
+    private var loginFeaturesSection: some View {
+        Section(header: Text(languageManager.localize("sample_login_features_title")).foregroundColor(themeTextColor)) {
+            Toggle(isOn: Binding(
+                get: { viewModel.isOktaIdEnabled },
+                set: { newValue in
+                    if !viewModel.updateOktaIdEnabled(newValue) {
+                        loginFeatureAlertMessage = languageManager.localize("sample_disable_other_first_okta")
+                    }
+                }
+            )) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(languageManager.localize("sample_enable_okta_id"))
+                        .foregroundColor(themeTextColor)
+                    Text(languageManager.localize("sample_okta_collection_description"))
+                        .font(.caption)
+                        .foregroundColor(themeSecondaryTextColor)
+                }
+            }
+
+            Toggle(isOn: Binding(
+                get: { viewModel.isThirdPartyLoginEnabled },
+                set: { newValue in
+                    if !viewModel.updateThirdPartyLoginEnabled(newValue) {
+                        loginFeatureAlertMessage = languageManager.localize("sample_disable_other_first_third_party")
+                    }
+                }
+            )) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(languageManager.localize("sample_enable_third_party_login"))
+                        .foregroundColor(themeTextColor)
+                    Text(languageManager.localize("sample_third_party_login_description"))
+                        .font(.caption)
+                        .foregroundColor(themeSecondaryTextColor)
+                }
+            }
+
+            if viewModel.isOktaIdEnabled {
+                Button(role: .destructive) {
+                    viewModel.clearOktaIdForCurrentEnvironment()
+                    let template = languageManager.localize("sample_okta_cleared_message")
+                    loginFeatureAlertMessage = String(format: template, viewModel.currentEnvironment.displayName)
+                } label: {
+                    Text(languageManager.localize("sample_clear_okta_id"))
+                }
+            }
+
+            if viewModel.isThirdPartyLoginEnabled {
+                Button(role: .destructive) {
+                    viewModel.clearThirdPartyLoginIdForCurrentEnvironment()
+                    let template = languageManager.localize("sample_third_party_cleared_message")
+                    loginFeatureAlertMessage = String(format: template, viewModel.currentEnvironment.displayName)
+                } label: {
+                    Text(languageManager.localize("sample_clear_third_party_login"))
+                }
+            }
         }
         .listRowBackground(themeListRowColor)
     }

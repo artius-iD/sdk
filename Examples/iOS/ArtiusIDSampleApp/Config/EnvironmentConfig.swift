@@ -126,6 +126,42 @@ public struct EnvironmentConfig {
                 .replacingOccurrences(of: "#env#", with: envToken)
                 .replacingOccurrences(of: "#domain#", with: registrationDomain)
         }
+
+        /// Environment-specific path for third-party login endpoint.
+        public var thirdPartyLoginEndpointPath: String {
+            switch self {
+            case .sandbox:
+                return "/api/third-party/login/sandbox"
+            case .development:
+                return "/api/third-party/login/development"
+            case .staging:
+                return "/api/third-party/login/staging"
+            }
+        }
+
+        /// Third-party login endpoint used by the sample app integration.
+        /// Adjust the path if your backend route differs.
+        public var thirdPartyLoginURL: String {
+            "\(baseURL)\(self.thirdPartyLoginEndpointPath)"
+        }
+
+        /// Environment-specific path for third-party registration endpoint.
+        public var thirdPartyRegistrationEndpointPath: String {
+            switch self {
+            case .sandbox:
+                return "/api/third-party/register/sandbox"
+            case .development:
+                return "/api/third-party/register/development"
+            case .staging:
+                return "/api/third-party/register/staging"
+            }
+        }
+
+        /// Third-party registration endpoint used by the sample app integration.
+        /// Adjust the path if your backend route differs.
+        public var thirdPartyRegistrationURL: String {
+            "\(baseURL)\(self.thirdPartyRegistrationEndpointPath)"
+        }
         
         /// Environment token for URL processing
         private var environmentToken: String {
@@ -190,7 +226,10 @@ public struct EnvironmentConfig {
     public func toSDKConfiguration(
         localizationOverrides: [String: String] = [:],
         imageOverrides: SDKImageOverrides? = nil,
-        includeOktaIDInVerificationPayload: Bool = false
+        includeOktaIDInVerificationPayload: Bool = false,
+        isThirdPartyLoginEnabled: Bool = false,
+        thirdPartyLoginURL: String? = nil,
+        thirdPartyRegistrationURL: String? = nil
     ) -> SDKConfiguration {
         // Configure the internal SDK with environment, template, domains, and client IDs
         ArtiusIDSDK.shared.configure(
@@ -201,7 +240,10 @@ public struct EnvironmentConfig {
             registrationDomain: environment.registrationDomain,
             clientId: clientId,
             clientGroupId: clientGroupId,
-            includeOktaIDInVerificationPayload: includeOktaIDInVerificationPayload
+            includeOktaIDInVerificationPayload: includeOktaIDInVerificationPayload,
+            isThirdPartyLoginEnabled: isThirdPartyLoginEnabled,
+            thirdPartyLoginURL: thirdPartyLoginURL,
+            thirdPartyRegistrationURL: thirdPartyRegistrationURL
         )
         
         return SDKConfiguration(
@@ -280,6 +322,7 @@ public struct AppConfiguration {
     let localizationStyle: LocalizationStyle
     let language: Language
     let isOktaIdEnabled: Bool
+    let isThirdPartyLoginEnabled: Bool
     
     public init(
         environment: EnvironmentConfig.Environment = .sandbox,
@@ -287,7 +330,8 @@ public struct AppConfiguration {
         imageOverrideScenario: ImageOverrideOption = .default,
         localizationStyle: LocalizationStyle = .standard,
         language: Language = .english,
-        isOktaIdEnabled: Bool = false
+        isOktaIdEnabled: Bool = false,
+        isThirdPartyLoginEnabled: Bool = false
     ) {
         self.environmentConfig = EnvironmentConfig.configForEnvironment(environment)
         self.theme = theme
@@ -295,6 +339,7 @@ public struct AppConfiguration {
         self.localizationStyle = localizationStyle
         self.language = language
         self.isOktaIdEnabled = isOktaIdEnabled
+        self.isThirdPartyLoginEnabled = isThirdPartyLoginEnabled
     }
     
     /// Create complete SDK configuration
@@ -309,7 +354,8 @@ public struct AppConfiguration {
         let sdkConfig = environmentConfig.toSDKConfiguration(
             localizationOverrides: localizations,
             imageOverrides: imageOverrides,
-            includeOktaIDInVerificationPayload: isOktaIdEnabled
+            includeOktaIDInVerificationPayload: isOktaIdEnabled,
+            isThirdPartyLoginEnabled: isThirdPartyLoginEnabled
         )
         
         return (themeConfig, sdkConfig)

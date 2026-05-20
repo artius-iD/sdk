@@ -221,6 +221,30 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         return true
     }
+
+    func applicationDidBecomeActive(_ application: UIApplication) {
+        logInfo("applicationDidBecomeActive", source: "AppDelegate")
+    }
+
+    func applicationWillResignActive(_ application: UIApplication) {
+        logInfo("applicationWillResignActive", source: "AppDelegate")
+    }
+
+    func applicationDidEnterBackground(_ application: UIApplication) {
+        logInfo("applicationDidEnterBackground", source: "AppDelegate")
+    }
+
+    func applicationWillEnterForeground(_ application: UIApplication) {
+        logInfo("applicationWillEnterForeground", source: "AppDelegate")
+    }
+
+    func applicationWillTerminate(_ application: UIApplication) {
+        logWarning("applicationWillTerminate", source: "AppDelegate")
+    }
+
+    func applicationDidReceiveMemoryWarning(_ application: UIApplication) {
+        logWarning("applicationDidReceiveMemoryWarning", source: "AppDelegate")
+    }
     
     // MARK: - APNs Token Registration
     

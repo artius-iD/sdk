@@ -25,6 +25,7 @@ class SampleAppViewModel: ObservableObject {
     @Published var currentEnvironment: EnvironmentConfig.Environment = .sandbox
     
     @Published var isOktaIdEnabled: Bool = false
+    @Published var isThirdPartyLoginEnabled: Bool = false
     @Published var isSDKInitialized: Bool = false
     @Published var isLoading: Bool = false
     @Published var isApprovalLoading: Bool = false
@@ -62,6 +63,15 @@ class SampleAppViewModel: ObservableObject {
     
     init() {
         self.currentEnvironment = environmentFromStoredValue(EnvironmentManager.shared.getCurrentEnvironment())
+        self.isOktaIdEnabled = AppPreferences.getBool(forKey: .isOktaIdEnabled)
+        self.isThirdPartyLoginEnabled = AppPreferences.getBool(forKey: .isThirdPartyLoginEnabled)
+
+        // Keep feature flags mutually exclusive even if stale preferences exist.
+        if isOktaIdEnabled && isThirdPartyLoginEnabled {
+            isOktaIdEnabled = false
+            AppPreferences.set(false, forKey: .isOktaIdEnabled)
+            logWarning("Both login feature flags were enabled in preferences; forcing Okta off", source: "SampleAppViewModel")
+        }
 
         // Load saved theme from AppThemeManager
         let savedTheme = AppThemeManager.shared.currentTheme
@@ -151,8 +161,13 @@ class SampleAppViewModel: ObservableObject {
         // Ensure SDK runtime environment matches the persisted app selection on launch.
         let config = EnvironmentConfig.configForEnvironment(currentEnvironment)
         _ = config.toSDKConfiguration(
-            includeOktaIDInVerificationPayload: isOktaIdEnabled
+            includeOktaIDInVerificationPayload: isOktaIdEnabled,
+            isThirdPartyLoginEnabled: isThirdPartyLoginEnabled,
+            thirdPartyLoginURL: AppPreferences.get(forKey: .thirdPartyLoginURL) ?? currentEnvironment.thirdPartyLoginURL,
+            thirdPartyRegistrationURL: AppPreferences.get(forKey: .thirdPartyRegistrationURL) ?? currentEnvironment.thirdPartyRegistrationURL
         )
+
+        configureThirdPartyLoginHandler()
         logInfo("Applied SDK environment configuration: \(currentEnvironment.displayName)", source: "SampleAppViewModel")
         
         isSDKInitialized = true
@@ -237,7 +252,10 @@ class SampleAppViewModel: ObservableObject {
 
         let config = EnvironmentConfig.configForEnvironment(environment)
         _ = config.toSDKConfiguration(
-            includeOktaIDInVerificationPayload: isOktaIdEnabled
+            includeOktaIDInVerificationPayload: isOktaIdEnabled,
+            isThirdPartyLoginEnabled: isThirdPartyLoginEnabled,
+            thirdPartyLoginURL: AppPreferences.get(forKey: .thirdPartyLoginURL) ?? currentEnvironment.thirdPartyLoginURL,
+            thirdPartyRegistrationURL: AppPreferences.get(forKey: .thirdPartyRegistrationURL) ?? currentEnvironment.thirdPartyRegistrationURL
         )
 
         certificateStatus = LocalizationManager.shared.string(forKey: "gen_processing")
@@ -272,9 +290,133 @@ class SampleAppViewModel: ObservableObject {
     
     // MARK: - Okta ID Management
     
-    func updateOktaIdEnabled(_ enabled: Bool) {
+    @discardableResult
+    func updateOktaIdEnabled(_ enabled: Bool) -> Bool {
+        if enabled && isThirdPartyLoginEnabled {
+            logWarning("Cannot enable Okta ID while third-party login is enabled", source: "SampleAppViewModel")
+            return false
+        }
+
         isOktaIdEnabled = enabled
+        AppPreferences.set(enabled, forKey: .isOktaIdEnabled)
         logInfo("Okta ID \(enabled ? "enabled" : "disabled")", source: "SampleAppViewModel")
+        initializeSDK()
+        return true
+    }
+
+    @discardableResult
+    func updateThirdPartyLoginEnabled(_ enabled: Bool) -> Bool {
+        if enabled && isOktaIdEnabled {
+            logWarning("Cannot enable third-party login while Okta ID is enabled", source: "SampleAppViewModel")
+            return false
+        }
+
+        guard isThirdPartyLoginEnabled != enabled else {
+            return true
+        }
+
+        isThirdPartyLoginEnabled = enabled
+        AppPreferences.set(enabled, forKey: .isThirdPartyLoginEnabled)
+        logInfo("Third-party login \(enabled ? "enabled" : "disabled")", source: "SampleAppViewModel")
+        ArtiusIDSDK.shared.setThirdPartyLoginEnabled(enabled)
+        configureThirdPartyLoginHandler()
+        return true
+    }
+
+    func clearOktaIdForCurrentEnvironment() {
+        let env = currentEnvironment.rawValue.lowercased()
+        try? KeychainHelper.standard.remove("oktaUserId_\(env)")
+        logInfo("Cleared Okta ID for environment: \(env)", source: "SampleAppViewModel")
+    }
+
+    func clearThirdPartyLoginIdForCurrentEnvironment() {
+        let env = currentEnvironment.rawValue.lowercased()
+        try? KeychainHelper.standard.remove("thirdPartyLoginId_\(env)")
+        logInfo("Cleared third-party login ID for environment: \(env)", source: "SampleAppViewModel")
+    }
+
+    func shouldTriggerThirdPartyLoginOnStartup() -> Bool {
+        guard isThirdPartyLoginEnabled else {
+            logInfo("Startup third-party login trigger: disabled by feature flag", source: "SampleAppViewModel")
+            return false
+        }
+
+        let hasVerificationAccount = (AppPreferences.get(forKey: .verificationAccountNumber) ?? "").isEmpty == false
+        guard hasVerificationAccount else {
+            logInfo("Startup third-party login trigger: skipped because verification account is missing", source: "SampleAppViewModel")
+            return false
+        }
+
+        let env = currentEnvironment.rawValue.lowercased()
+        let existingThirdPartyLogin = try? KeychainHelper.standard.getString("thirdPartyLoginId_\(env)")
+        let shouldTrigger = (existingThirdPartyLogin ?? "").isEmpty
+        if shouldTrigger {
+            logInfo("Startup third-party login trigger: pending for environment \(env)", source: "SampleAppViewModel")
+        } else {
+            logInfo("Startup third-party login trigger: skipped because login ID already exists for environment \(env)", source: "SampleAppViewModel")
+        }
+        return shouldTrigger
+    }
+
+    private func configureThirdPartyLoginHandler() {
+        ArtiusIDSDK.shared.setThirdPartyLoginHandler { loginId, password, _ in
+            let trimmedLoginId = loginId.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmedLoginId.isEmpty else {
+                return ArtiusIDSDK.ThirdPartyLoginResult(
+                    isSuccessful: false,
+                    loginId: nil,
+                    errorMessage: LocalizationManager.shared.string(
+                        forKey: "third_party_login_error_login_id_required",
+                        fallback: "Login ID is required"
+                    )
+                )
+            }
+
+            guard !password.isEmpty else {
+                return ArtiusIDSDK.ThirdPartyLoginResult(
+                    isSuccessful: false,
+                    loginId: nil,
+                    errorMessage: LocalizationManager.shared.string(
+                        forKey: "third_party_login_error_password_required",
+                        fallback: "Password is required"
+                    )
+                )
+            }
+
+            do {
+                let accountNumber = AppPreferences.get(forKey: .verificationAccountNumber)
+                let configuredLoginURL = AppPreferences.get(forKey: .thirdPartyLoginURL) ?? self.currentEnvironment.thirdPartyLoginURL
+                let configuredRegistrationURL = AppPreferences.get(forKey: .thirdPartyRegistrationURL) ?? self.currentEnvironment.thirdPartyRegistrationURL
+
+                ArtiusIDSDK.shared.setThirdPartyLoginURL(configuredLoginURL)
+                ArtiusIDSDK.shared.setThirdPartyRegistrationURL(configuredRegistrationURL)
+
+                logInfo(
+                    "Third-party handler calling SDK chain (environment=\(self.currentEnvironment.rawValue), loginIdLength=\(trimmedLoginId.count), hasAccountNumber=\(!(accountNumber ?? "").isEmpty))",
+                    source: "SampleAppViewModel"
+                )
+                let response = try await ArtiusIDSDK.shared.validateCredentialsAndRegisterFCM(
+                    loginId: trimmedLoginId,
+                    password: password,
+                    accountNumber: accountNumber
+                )
+
+                logInfo("Third-party handler received SDK response (isSuccessful=\(response.isSuccessful))", source: "SampleAppViewModel")
+
+                return ArtiusIDSDK.ThirdPartyLoginResult(
+                    isSuccessful: response.isSuccessful,
+                    loginId: response.loginId,
+                    errorMessage: response.errorMessage
+                )
+            } catch {
+                logError("Third-party login service call failed: \(error.localizedDescription)", source: "SampleAppViewModel")
+                return ArtiusIDSDK.ThirdPartyLoginResult(
+                    isSuccessful: false,
+                    loginId: nil,
+                    errorMessage: error.localizedDescription
+                )
+            }
+        }
     }
     
     // MARK: - SDK Flows
@@ -360,6 +502,8 @@ class SampleAppViewModel: ObservableObject {
             for env in environments {
                 let memberIdKey = "verification-\(env)"
                 try? sdkKeychain.remove(memberIdKey)
+                try? KeychainHelper.standard.remove("oktaUserId_\(env)")
+                try? KeychainHelper.standard.remove("thirdPartyLoginId_\(env)")
             }
 
             // Reset in-memory status previews

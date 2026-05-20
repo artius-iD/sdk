@@ -67,6 +67,20 @@
 "sample_authentication_complete" = "Autenticación Completa";
 "sample_approval_request_result" = "Resultado de la Solicitud de Aprobación";
 "sample_response" = "Respuesta";
+"sample_ok" = "Aceptar";
+"sample_feature_settings_title" = "Configuración de funciones";
+"sample_login_features_title" = "Funciones de inicio de sesión";
+"sample_enable_okta_id" = "Habilitar Okta ID";
+"sample_okta_collection_description" = "Recopilar Okta ID durante el flujo de verificación";
+"sample_enable_third_party_login" = "Habilitar inicio de sesión de terceros";
+"sample_third_party_login_description" = "Requerir credenciales adicionales después de la verificación";
+"sample_disable_other_first_okta" = "El inicio de sesión de terceros está habilitado. Desactívelo primero para habilitar Okta ID.";
+"sample_disable_other_first_third_party" = "Okta ID está habilitado. Desactívelo primero para habilitar el inicio de sesión de terceros.";
+"sample_clear_okta_id" = "Borrar Okta ID";
+"sample_clear_third_party_login" = "Borrar inicio de sesión de terceros";
+"sample_okta_cleared_message" = "Okta ID borrado para %@.";
+"sample_third_party_cleared_message" = "ID de inicio de sesión de terceros borrado para %@.";
+"sample_third_party_login_complete" = "Inicio de sesión de terceros completado para %@";
 
 /* Settings View */
 "settings_imageOverrides_description" = "Los sobrecargas de imagen le permiten personalizar iconos, botones, logotipos e indicadores de estado en todos los flujos del SDK.";

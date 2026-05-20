@@ -32,6 +32,14 @@ struct AppPreferences {
         // Environment Configuration
         case selectedEnvironment = "selectedEnvironment"
         case selectedDomain = "selectedDomain"
+
+        // Feature Flags
+        case isOktaIdEnabled = "isOktaIdEnabled"
+        case isThirdPartyLoginEnabled = "isThirdPartyLoginEnabled"
+
+        // Third-Party Integration
+        case thirdPartyLoginURL = "thirdPartyLoginURL"
+        case thirdPartyRegistrationURL = "thirdPartyRegistrationURL"
     }
     
     /// Set a preference value (stored as String in UserDefaults)
@@ -53,6 +61,23 @@ struct AppPreferences {
     /// - Returns: The stored string value, or nil if not found
     static func get(forKey key: PreferenceKey) -> String? {
         return UserDefaults.standard.string(forKey: key.rawValue)
+    }
+
+    /// Set a boolean preference value
+    /// - Parameters:
+    ///   - value: The boolean value to store
+    ///   - key: The preference key enum
+    static func set(_ value: Bool, forKey key: PreferenceKey) {
+        UserDefaults.standard.set(value, forKey: key.rawValue)
+        UserDefaults.standard.synchronize()
+    }
+
+    /// Get a boolean preference value
+    /// - Parameters:
+    ///   - key: The preference key enum
+    /// - Returns: The stored boolean value, or false if not found
+    static func getBool(forKey key: PreferenceKey) -> Bool {
+        return UserDefaults.standard.bool(forKey: key.rawValue)
     }
     
     /// Remove a preference value

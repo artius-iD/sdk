@@ -28,6 +28,7 @@ import artiusid_sdk_ios
 struct SampleAppView: View {
     @StateObject private var viewModel = SampleAppViewModel()
     @StateObject private var appNotificationState = ArtiusID.AppNotificationState.shared
+    @Environment(\.scenePhase) private var scenePhase
     @EnvironmentObject var languageManager: LanguageManager
     @EnvironmentObject var themeManager: AppThemeManager
     
@@ -36,6 +37,8 @@ struct SampleAppView: View {
     @State private var showingApproval = false
     @State private var showingBinding = false
     @State private var showingSettings = false
+    @State private var showingStartupThirdPartyLogin = false
+    @State private var pendingStartupThirdPartyLogin = false
     
     // Result tracking states
     @State private var verificationResult: VerificationResult? = nil
@@ -56,196 +59,326 @@ struct SampleAppView: View {
             return .staging
         }
     }
-    
-    var body: some View {
+
+    private var isPresentingAnotherModal: Bool {
+        showingSettings || showingVerification || showingAuthentication || showingApproval || showingBinding
+    }
+
+    private var homeRootView: some View {
         ZStack {
             NavigationView {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 16) {
-                        // Header Section
-                        headerSection
-                        
-                        // Action Buttons
-                        actionButtonsSection
-                        
-                        // Show only the most recent result
-                        if lastActionType == "verification", let result = verificationResult {
-                            verificationResultsSection(result)
-                        } else if lastActionType == "authentication", let result = authenticationResult {
-                            authenticationResultsSection(result)
-                        } else if lastActionType == "approval" {
-                            approvalResultCard
-                        } else if lastActionType == "binding" {
-                            bindingResultCard
-                        } else if lastActionType == "clear" || lastActionType == "fcm" {
-                            lastResultCard
-                        }
-                    }
-                    .padding(16)
-                }
-                .background(backgroundColor)
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button(action: {  showingSettings = true }) {
-                            Image(systemName: "gear")
-                                .foregroundColor(textColor)
-                        }
-                    }
-                }
-                .fullScreenCover(isPresented: $showingVerification) {
-                    // SDK Public API: Verification View
-                    ArtiusIDVerificationView(
-                        configuration: ArtiusIDVerificationView.Configuration(
-                            clientId: 12345,
-                            environment: selectedSDKEnvironment,
-                            preferredDocumentType: .passport
-                        ),
-                        onCompletion: { result in
-                            logInfo("Verification completed: \(result.isSuccessful ? "Success" : "Failed")", source: "SampleAppView")
-                            if let error = result.errorMessage {
-                                logWarning("Verification error: \(error)", source: "SampleAppView")
-                            }
-                            DispatchQueue.main.async {
-                                self.handleVerificationResult(result)
-                                showingVerification = false
-                            }
-                        },
-                        onCancel: {
-                            logInfo("Verification cancelled", source: "SampleAppView")
-                            verificationResult = nil
-                            isVerificationComplete = false
-                            showingVerification = false
-                        }
-                    )
-                }
+                homeScrollContent
+            }
         }
-        .fullScreenCover(isPresented: $showingAuthentication) {
-            // SDK Public API: Authentication View
-            // Use account number from verification, fallback to test account
-            let storedAccountNumber = AppPreferences.get(forKey: .verificationAccountNumber) ?? "test-account"
-            
-            ArtiusIDAuthenticationView(
-                configuration: ArtiusIDAuthenticationView.Configuration(
-                    clientId: 1,
-                    clientGroupId: 1,
-                    accountNumber: storedAccountNumber,
-                    environment: selectedSDKEnvironment,
-                    authenticationTitle: "Authenticate",
-                    authenticationReason: "Please authenticate to continue"
-                ),
-                onCompletion: { result in
-                    logInfo("Authentication completed: \(result.isSuccessful ? "Success" : "Failed")", source: "SampleAppView")
-                    if let error = result.errorMessage {
-                        logWarning("Authentication error: \(error)", source: "SampleAppView")
-                    }
-                    DispatchQueue.main.async {
-                        self.handleAuthenticationResult(result, isSuccessful: result.isSuccessful)
-                        showingAuthentication = false
-                    }
-                },
-                onCancel: {
-                    logInfo("Authentication cancelled", source: "SampleAppView")
-                    authenticationResult = nil
-                    isAuthenticationComplete = false
+    }
+
+    private var homeScrollContent: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                // Header Section
+                headerSection
+
+                // Action Buttons
+                actionButtonsSection
+
+                latestResultSection
+            }
+            .padding(16)
+        }
+        .background(backgroundColor)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {  showingSettings = true }) {
+                    Image(systemName: "gear")
+                        .foregroundColor(textColor)
+                }
+            }
+        }
+        .fullScreenCover(isPresented: $showingVerification) {
+            verificationFlowView
+        }
+    }
+
+    private var verificationFlowView: some View {
+        // SDK Public API: Verification View
+        ArtiusIDVerificationView(
+            configuration: ArtiusIDVerificationView.Configuration(
+                clientId: 12345,
+                environment: selectedSDKEnvironment,
+                preferredDocumentType: .passport
+            ),
+            onCompletion: { result in
+                logInfo("Verification completed: \(result.isSuccessful ? "Success" : "Failed")", source: "SampleAppView")
+                if let error = result.errorMessage {
+                    logWarning("Verification error: \(error)", source: "SampleAppView")
+                }
+                DispatchQueue.main.async {
+                    self.handleVerificationResult(result)
+                    showingVerification = false
+                }
+            },
+            onCancel: {
+                logInfo("Verification cancelled", source: "SampleAppView")
+                verificationResult = nil
+                isVerificationComplete = false
+                showingVerification = false
+            }
+        )
+    }
+
+    private var authenticationFlowView: some View {
+        // SDK Public API: Authentication View
+        // Use account number from verification, fallback to test account
+        let storedAccountNumber = AppPreferences.get(forKey: .verificationAccountNumber) ?? "test-account"
+
+        return ArtiusIDAuthenticationView(
+            configuration: ArtiusIDAuthenticationView.Configuration(
+                clientId: 1,
+                clientGroupId: 1,
+                accountNumber: storedAccountNumber,
+                environment: selectedSDKEnvironment,
+                authenticationTitle: "Authenticate",
+                authenticationReason: "Please authenticate to continue"
+            ),
+            onCompletion: { result in
+                logInfo("Authentication completed: \(result.isSuccessful ? "Success" : "Failed")", source: "SampleAppView")
+                if let error = result.errorMessage {
+                    logWarning("Authentication error: \(error)", source: "SampleAppView")
+                }
+                DispatchQueue.main.async {
+                    self.handleAuthenticationResult(result, isSuccessful: result.isSuccessful)
                     showingAuthentication = false
                 }
-            )
+            },
+            onCancel: {
+                logInfo("Authentication cancelled", source: "SampleAppView")
+                authenticationResult = nil
+                isAuthenticationComplete = false
+                showingAuthentication = false
+            }
+        )
+    }
+
+    private var approvalFlowView: some View {
+        ArtiusID.ApprovalView(
+            onCompletion: { result in
+                lastActionType = "approval"
+                approvalResult = String(describing: result)
+                let responseMessage = String(describing: result)
+                viewModel.lastResult = responseMessage
+                logInfo("Approval response received: \(result)", source: "SampleAppView")
+                showingApproval = false
+                appNotificationState.reset()
+            },
+            onCancel: {
+                logInfo("Approval cancelled", source: "SampleAppView")
+                showingApproval = false
+                appNotificationState.reset()
+            }
+        )
+        .environmentObject(appNotificationState)
+    }
+
+    private var bindingFlowView: some View {
+        ArtiusID.BindingView(
+            onCompletion: { result in
+                lastActionType = "binding"
+                let decisionText = String(describing: result.decision)
+                let requestIdText = result.requestId?.description ?? "nil"
+                let sessionIdText = result.sessionId ?? "nil"
+                let capturedTimeText = String(describing: result.capturedTime)
+                let successText = result.isSuccessful ? "true" : "false"
+                let summaryParts = [
+                    "decision=\(decisionText)",
+                    "requestId=\(requestIdText)",
+                    "sessionId=\(sessionIdText)",
+                    "capturedTime=\(capturedTimeText)",
+                    "success=\(successText)"
+                ]
+                bindingResult = summaryParts.joined(separator: ", ")
+                viewModel.lastResult = bindingResult ?? ""
+                logInfo("Binding response received: \(result.decision)", source: "SampleAppView")
+                showingBinding = false
+                appNotificationState.reset()
+            },
+            onCancel: {
+                logInfo("Binding cancelled", source: "SampleAppView")
+                showingBinding = false
+                appNotificationState.reset()
+            }
+        )
+        .environmentObject(appNotificationState)
+    }
+
+    private var startupThirdPartyLoginFlowView: some View {
+        ThirdPartyLoginView(
+            showCancelButton: false,
+            onComplete: { loginId in
+                let template = languageManager.localize("sample_third_party_login_complete")
+                viewModel.lastResult = String(format: template, loginId)
+                showingStartupThirdPartyLogin = false
+            },
+            onCancel: nil
+        )
+        .onAppear {
+            logInfo("Presenting startup third-party login screen", source: "SampleAppView")
         }
+    }
+
+    private func handleNotificationTypeChange(_ newType: ArtiusID.NotificationType) {
+        // Observe notification state changes (matches Android LaunchedEffect)
+        logInfo("Notification type changed to: \(newType)", source: "SampleAppView")
+
+        switch newType {
+        case .approval:
+            logInfo("Opening approval screen for notification", source: "SampleAppView")
+            applySelectedSDKTheme()
+            showingApproval = true
+        case .binding:
+            logInfo("Opening binding screen for notification", source: "SampleAppView")
+            applySelectedSDKTheme()
+            showingBinding = true
+        case .default:
+            logInfo("Default notification state", source: "SampleAppView")
+        @unknown default:
+            logInfo("Unknown notification type: \(newType)", source: "SampleAppView")
+        }
+    }
+
+    private func handleScenePhaseChange(_ phase: ScenePhase) {
+        switch phase {
+        case .active:
+            logInfo("Scene phase changed to active", source: "SampleAppView")
+        case .inactive:
+            logInfo("Scene phase changed to inactive", source: "SampleAppView")
+        case .background:
+            logInfo("Scene phase changed to background", source: "SampleAppView")
+        @unknown default:
+            logWarning("Scene phase changed to unknown state", source: "SampleAppView")
+        }
+    }
+
+    private func handleOnAppear() {
+        // ✅ CRITICAL: Always fetch credentials from keychain based on current environment
+        // Matches Android: onCreate() checks credentials every time activity is created
+        logInfo("Home screen appeared - fetching credentials for current environment", source: "SampleAppView")
+
+        // Initialize SDK only if not already initialized
+        if !viewModel.isSDKInitialized {
+            viewModel.initializeSDK()
+        } else {
+            // ✅ ALWAYS refresh credentials from keychain based on current environment
+            // This ensures we show correct status when switching environments or navigating back
+            viewModel.refreshCredentialStatusFromKeychain()
+        }
+
+        if viewModel.shouldTriggerThirdPartyLoginOnStartup() {
+            pendingStartupThirdPartyLogin = true
+            tryPresentPendingThirdPartyLoginIfNeeded()
+        }
+
+        // Set root view controller for bridge calls
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let window = windowScene.windows.first,
+               let rootVC = window.rootViewController {
+                // Navigate to topmost view controller
+                var topController = rootVC
+                while let presented = topController.presentedViewController {
+                    topController = presented
+                }
+                if let nav = topController as? UINavigationController {
+                    topController = nav.visibleViewController ?? nav
+                }
+                viewModel.setRootViewController(topController)
+            }
+        }
+    }
+    
+    var body: some View {
+        homeRootView
+        .fullScreenCover(isPresented: $showingAuthentication) {
+            authenticationFlowView
         }
         .fullScreenCover(isPresented: $showingApproval) {
-            // SDK Public API: Approval View
-            ArtiusID.ApprovalView(
-                onCompletion: { result in
-                    lastActionType = "approval"
-                    approvalResult = String(describing: result)
-                    let responseMessage = String(describing: result)
-                    viewModel.lastResult = responseMessage
-                    logInfo("Approval response received: \(result)", source: "SampleAppView")
-                    showingApproval = false
-                    appNotificationState.reset()
-                },
-                onCancel: {
-                    logInfo("Approval cancelled", source: "SampleAppView")
-                    showingApproval = false
-                    appNotificationState.reset()
-                }
-            )
-            .environmentObject(appNotificationState)
+            approvalFlowView
         }
         .fullScreenCover(isPresented: $showingBinding) {
-            ArtiusID.BindingView(
-                onCompletion: { result in
-                    lastActionType = "binding"
-                    let requestIdText = result.requestId?.description ?? "nil"
-                    let sessionIdText = result.sessionId ?? "nil"
-                    bindingResult = "decision=\(result.decision), requestId=\(requestIdText), sessionId=\(sessionIdText), capturedTime=\(result.capturedTime), success=\(result.isSuccessful)"
-                    viewModel.lastResult = bindingResult ?? ""
-                    logInfo("Binding response received: \(result.decision)", source: "SampleAppView")
-                    showingBinding = false
-                    appNotificationState.reset()
-                },
-                onCancel: {
-                    logInfo("Binding cancelled", source: "SampleAppView")
-                    showingBinding = false
-                    appNotificationState.reset()
-                }
-            )
-            .environmentObject(appNotificationState)
+            bindingFlowView
         }
-        .sheet(isPresented: $showingSettings) {
+        .sheet(isPresented: $showingSettings, onDismiss: {
+            tryPresentPendingThirdPartyLoginIfNeeded()
+        }) {
             SampleAppSettingsView(viewModel: viewModel)
                 .environmentObject(languageManager)
         }
+        .fullScreenCover(isPresented: $showingStartupThirdPartyLogin) {
+            startupThirdPartyLoginFlowView
+        }
         .onChange(of: appNotificationState.notificationType) { _, newType in
-            // Observe notification state changes (matches Android LaunchedEffect)
-            logInfo("Notification type changed to: \(newType)", source: "SampleAppView")
-            
-            switch newType {
-            case .approval:
-                logInfo("Opening approval screen for notification", source: "SampleAppView")
-                applySelectedSDKTheme()
-                showingApproval = true
-            case .binding:
-                logInfo("Opening binding screen for notification", source: "SampleAppView")
-                applySelectedSDKTheme()
-                showingBinding = true
-            case .default:
-                logInfo("Default notification state", source: "SampleAppView")
-            @unknown default:
-                logInfo("Unknown notification type: \(newType)", source: "SampleAppView")
+            handleNotificationTypeChange(newType)
+        }
+        .onChange(of: viewModel.isThirdPartyLoginEnabled) { _, isEnabled in
+            if isEnabled && viewModel.shouldTriggerThirdPartyLoginOnStartup() {
+                pendingStartupThirdPartyLogin = true
+                tryPresentPendingThirdPartyLoginIfNeeded()
             }
         }
+        .onChange(of: scenePhase) { _, phase in
+            handleScenePhaseChange(phase)
+        }
+        .onChange(of: showingVerification) { _, _ in
+            tryPresentPendingThirdPartyLoginIfNeeded()
+        }
+        .onChange(of: showingAuthentication) { _, _ in
+            tryPresentPendingThirdPartyLoginIfNeeded()
+        }
+        .onChange(of: showingApproval) { _, _ in
+            tryPresentPendingThirdPartyLoginIfNeeded()
+        }
+        .onChange(of: showingBinding) { _, _ in
+            tryPresentPendingThirdPartyLoginIfNeeded()
+        }
         .onAppear {
-            // ✅ CRITICAL: Always fetch credentials from keychain based on current environment
-            // Matches Android: onCreate() checks credentials every time activity is created
-            logInfo("Home screen appeared - fetching credentials for current environment", source: "SampleAppView")
-            
-            // Initialize SDK only if not already initialized
-            if !viewModel.isSDKInitialized {
-                viewModel.initializeSDK()
-            } else {
-                // ✅ ALWAYS refresh credentials from keychain based on current environment
-                // This ensures we show correct status when switching environments or navigating back
-                viewModel.refreshCredentialStatusFromKeychain()
-            }
-            
-            // Set root view controller for bridge calls
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                   let window = windowScene.windows.first,
-                   let rootVC = window.rootViewController {
-                    // Navigate to topmost view controller
-                    var topController = rootVC
-                    while let presented = topController.presentedViewController {
-                        topController = presented
-                    }
-                    if let nav = topController as? UINavigationController {
-                        topController = nav.visibleViewController ?? nav
-                    }
-                    viewModel.setRootViewController(topController)
-                }
-            }
+            handleOnAppear()
+        }
+    }
+
+    private func tryPresentPendingThirdPartyLoginIfNeeded() {
+        guard pendingStartupThirdPartyLogin else {
+            logDebug("Startup third-party login presentation: no pending request", source: "SampleAppView")
+            return
+        }
+
+        guard !showingStartupThirdPartyLogin else {
+            logDebug("Startup third-party login presentation: already showing", source: "SampleAppView")
+            return
+        }
+
+        guard !isPresentingAnotherModal else {
+            logDebug("Startup third-party login presentation: waiting for other modal to dismiss", source: "SampleAppView")
+            return
+        }
+
+        logInfo("Startup third-party login presentation: showing cover now", source: "SampleAppView")
+        pendingStartupThirdPartyLogin = false
+        showingStartupThirdPartyLogin = true
+    }
+
+    @ViewBuilder
+    private var latestResultSection: some View {
+        // Show only the most recent result
+        if lastActionType == "verification", let result = verificationResult {
+            verificationResultsSection(result)
+        } else if lastActionType == "authentication", let result = authenticationResult {
+            authenticationResultsSection(result)
+        } else if lastActionType == "approval" {
+            approvalResultCard
+        } else if lastActionType == "binding" {
+            bindingResultCard
+        } else if lastActionType == "clear" || lastActionType == "fcm" {
+            lastResultCard
         }
     }
     
