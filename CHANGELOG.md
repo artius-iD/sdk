@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.1] - 2026-09-16
+
+### Changed
+- Reduced the public API surface: the presence monitor's internal classes are no longer
+  part of the framework's public interface. The host-facing session-binding and presence
+  APIs are unchanged.
+
 ## [3.1.0] - 2026-09-16
 
 ### Added
