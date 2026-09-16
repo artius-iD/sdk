@@ -23,6 +23,9 @@ public typealias Environments = artiusid_sdk_ios.Environments
 public typealias LogLevel = artiusid_sdk_ios.LogLevel
 public typealias ThirdPartyLoginResult = artiusid_sdk_ios.ArtiusIDSDK.ThirdPartyLoginResult
 public typealias ThirdPartyLoginHandler = artiusid_sdk_ios.ArtiusIDSDK.ThirdPartyLoginHandler
+// The result types live in the binary; the package no longer compiles its own copies.
+public typealias VerificationResult = artiusid_sdk_ios.VerificationResult
+public typealias BindingEnrollmentResult = artiusid_sdk_ios.BindingEnrollmentResult
 #if canImport(SwiftUI)
 public typealias ThirdPartyLoginView = artiusid_sdk_ios.ThirdPartyLoginView
 #endif
@@ -207,7 +210,7 @@ public class Keychain {
             return
         }
 
-        let key = "oktaUserId_\(normalizedEnvironment)"
+        let key = artiusid_sdk_ios.ArtiusID.Environment.oktaUserIdKey(fromEnvironmentName: normalizedEnvironment)
         if let userId = userId, !userId.isEmpty {
             _ = set(userId, forKey: key)
         } else {
@@ -221,7 +224,7 @@ public class Keychain {
             return nil
         }
 
-        let key = "oktaUserId_\(normalizedEnvironment)"
+        let key = artiusid_sdk_ios.ArtiusID.Environment.oktaUserIdKey(fromEnvironmentName: normalizedEnvironment)
         return get(forKey: key)
     }
 
@@ -231,7 +234,7 @@ public class Keychain {
             return
         }
 
-        let key = "thirdPartyLoginId_\(normalizedEnvironment)"
+        let key = artiusid_sdk_ios.ArtiusID.Environment.thirdPartyLoginIdKey(fromEnvironmentName: normalizedEnvironment)
         if let loginId = loginId, !loginId.isEmpty {
             _ = set(loginId, forKey: key)
         } else {
@@ -245,7 +248,7 @@ public class Keychain {
             return nil
         }
 
-        let key = "thirdPartyLoginId_\(normalizedEnvironment)"
+        let key = artiusid_sdk_ios.ArtiusID.Environment.thirdPartyLoginIdKey(fromEnvironmentName: normalizedEnvironment)
         return get(forKey: key)
     }
 }
@@ -262,6 +265,7 @@ public class ArtiusIDSDKWrapper {
         let clientGroupId: Int
         let logLevel: String
         let includeOktaIDInVerificationPayload: Bool
+        let verificationOperationMode: artiusid_sdk_ios.ArtiusID.OperationMode
         let isThirdPartyLoginEnabled: Bool
         let effectiveOktaUserId: String?
         let effectiveThirdPartyLoginId: String?
@@ -293,9 +297,9 @@ public class ArtiusIDSDKWrapper {
     /// - Parameters:
     ///   - environment: Target environment (.sandbox, .development, .staging, .production)
     ///   - urlTemplate: URL template for mobile services (e.g., "https://#env#.#domain#")
-    ///   - mobileDomain: Domain for mobile services (e.g., "mobile.artiusid.dev")
+    ///   - mobileDomain: Domain for mobile services (e.g., "mobile.artiusid.ai")
     ///   - registrationUrlTemplate: URL template for registration services
-    ///   - registrationDomain: Domain for registration services (e.g., "registration.artiusid.dev")
+    ///   - registrationDomain: Domain for registration services (e.g., "registration.artiusid.ai")
     ///   - clientId: Client ID for API requests
     ///   - clientGroupId: Client Group ID for API requests
     ///   - includeOktaIDInVerificationPayload: Whether to include Okta ID in verification requests (default: true)
@@ -305,12 +309,12 @@ public class ArtiusIDSDKWrapper {
     ///   - #domain# → provided domain string
     ///   Example for Sandbox:
     ///     urlTemplate: "https://#env#.#domain#"
-    ///     mobileDomain: "mobile.artiusid.dev"
-    ///     Result: "https://sandbox.mobile.artiusid.dev"
+    ///     mobileDomain: "mobile.artiusid.ai"
+    ///     Result: "https://sandbox.mobile.artiusid.ai"
     ///   Example for Development:
     ///     urlTemplate: "https://#domain#"
-    ///     mobileDomain: "service-mobile.dev.artiusid.dev"
-    ///     Result: "https://service-mobile.dev.artiusid.dev"
+    ///     mobileDomain: "service-mobile.dev.artiusid.ai"
+    ///     Result: "https://service-mobile.dev.artiusid.ai"
     public func configure(
         environment: Environments? = nil,
         urlTemplate: String,
@@ -321,8 +325,10 @@ public class ArtiusIDSDKWrapper {
         clientGroupId: Int,
         logLevel: LogLevel = .info,
         includeOktaIDInVerificationPayload: Bool = true,
+        verificationOperationMode: artiusid_sdk_ios.ArtiusID.OperationMode = .bindingEnrollment,
         oktaUserId: String? = nil,
-        isThirdPartyLoginEnabled: Bool = false,
+        // Defaults to true, matching ArtiusIDSDK.configure and Android.
+        isThirdPartyLoginEnabled: Bool = true,
         thirdPartyLoginId: String? = nil,
         thirdPartyAuthToken: String? = nil,
         thirdPartyLoginURL: String? = nil,
@@ -398,6 +404,7 @@ public class ArtiusIDSDKWrapper {
                 clientGroupId: clientGroupId,
                 logLevel: String(describing: logLevel),
                 includeOktaIDInVerificationPayload: includeOktaIDInVerificationPayload,
+                verificationOperationMode: verificationOperationMode,
                 isThirdPartyLoginEnabled: isThirdPartyLoginEnabled,
                 effectiveOktaUserId: self.oktaUserId,
                 effectiveThirdPartyLoginId: self.thirdPartyLoginId,
@@ -433,6 +440,7 @@ public class ArtiusIDSDKWrapper {
             WrapperLogger.debug("  Client Group ID: \(clientGroupId)", source: "ArtiusIDSDKWrapper")
             WrapperLogger.debug("  Log Level: \(logLevel)", source: "ArtiusIDSDKWrapper")
             WrapperLogger.debug("  Include Okta ID: \(includeOktaIDInVerificationPayload)", source: "ArtiusIDSDKWrapper")
+            WrapperLogger.debug("  Verification operation mode: \(verificationOperationMode.displayName)", source: "ArtiusIDSDKWrapper")
             WrapperLogger.debug("  Third-party login enabled: \(isThirdPartyLoginEnabled)", source: "ArtiusIDSDKWrapper")
             if let providedOktaUserId = normalizedProvidedOktaUserId, !providedOktaUserId.isEmpty {
                 WrapperLogger.debug("  Okta User ID (explicit): \(String(providedOktaUserId.prefix(10)))...", source: "ArtiusIDSDKWrapper")
@@ -462,6 +470,7 @@ public class ArtiusIDSDKWrapper {
                     clientId: clientId,
                     clientGroupId: clientGroupId,
                     includeOktaIDInVerificationPayload: includeOktaIDInVerificationPayload,
+                    verificationOperationMode: verificationOperationMode,
                     isThirdPartyLoginEnabled: isThirdPartyLoginEnabled,
                     thirdPartyAuthToken: self.thirdPartyAuthToken,
                     thirdPartyLoginURL: self.thirdPartyLoginURL,
@@ -731,8 +740,8 @@ public class ArtiusIDSDKWrapper {
 
 // SDK Information and utilities
 public struct ArtiusIDSDKInfo {
-    public static let version = "3.0.11"
-    public static let wrapperVersion = "3.0.11"
+    public static let version = "3.1.0"
+    public static let wrapperVersion = "3.1.0"
     public static let build = "iOS Universal Binary (Device + Simulator)"
     public static let architecture = "iOS (arm64 + x86_64)"
     public static func printInfo() {
@@ -765,8 +774,10 @@ public func configureArtiusIDSDK(
     clientGroupId: Int,
     logLevel: LogLevel = .info,
     includeOktaIDInVerificationPayload: Bool = true,
+    verificationOperationMode: artiusid_sdk_ios.ArtiusID.OperationMode = .bindingEnrollment,
     oktaUserId: String? = nil,
-    isThirdPartyLoginEnabled: Bool = false,
+    // Defaults to true, matching ArtiusIDSDK.configure and Android.
+    isThirdPartyLoginEnabled: Bool = true,
     thirdPartyLoginId: String? = nil,
     thirdPartyAuthToken: String? = nil,
     thirdPartyLoginURL: String? = nil,
@@ -782,6 +793,7 @@ public func configureArtiusIDSDK(
         clientGroupId: clientGroupId,
         logLevel: logLevel,
         includeOktaIDInVerificationPayload: includeOktaIDInVerificationPayload,
+        verificationOperationMode: verificationOperationMode,
         oktaUserId: oktaUserId,
         isThirdPartyLoginEnabled: isThirdPartyLoginEnabled,
         thirdPartyLoginId: thirdPartyLoginId,
