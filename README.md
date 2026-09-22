@@ -4,7 +4,7 @@ Identity verification, biometric authentication and session binding for iOS apps
 
 | | |
 |---|---|
-| **Latest release** | [3.1.1](https://github.com/artius-iD/sdk/releases/tag/v3.1.1) (September 16, 2026) |
+| **Latest release** | [3.1.2](https://github.com/artius-iD/sdk/releases/tag/v3.1.2) (September 22, 2026) |
 | **Platform** | iOS 18.2 or later (iPhone and iPad) |
 | **Toolchain** | Xcode 26.6 or later. The framework is built with Swift 6.3 in Swift 5 language mode. |
 | **Distribution** | Swift Package Manager |
@@ -19,6 +19,11 @@ Identity verification, biometric authentication and session binding for iOS apps
 - **Organization sign-in.** Enrollment can be tied to your organization's own login, such as Okta or another OIDC provider.
 - **Mutual TLS.** The SDK registers a client certificate for the device and uses it for its service calls.
 - **Branding.** You can set your own colors, fonts, logo, text and language.
+
+## What's new in 3.1.2
+
+- Enrollment retries now send the user to the correct capture step — the front of the document, the back or its barcode, the passport, or the face — instead of a mismatched one.
+- A verification that comes back with a failing document image, a low face match, or a failed identity check is now reported as a failure rather than a success, and no account is stored for it.
 
 ## What's new in 3.1.1
 
@@ -47,7 +52,7 @@ See [CHANGELOG.md](CHANGELOG.md) for details and [Upgrading from 3.0](#upgrading
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/artius-iD/sdk", from: "3.1.1")
+    .package(url: "https://github.com/artius-iD/sdk", from: "3.1.2")
 ],
 targets: [
     .target(
@@ -334,7 +339,7 @@ For full control, `EnhancedSDKThemeConfiguration` also accepts `typography`, `co
 - **iOS 18.2 minimum.** Raise your deployment target to 18.2 or later.
 - **Result types.** `VerificationResult` and `BindingEnrollmentResult` now come from the framework, under the same names. Code that reads results keeps compiling, and every result field is now available.
 - **Certificates.** The first launch after upgrading issues new client certificates for the device and removes the old one. This happens in the background, and users aren't prompted.
-- **Sample code.** `Examples/iOS` was written for the 2.x API. The snippets in this README are current for 3.1.1.
+- **Sample code.** `Examples/iOS` was written for the 2.x API. The snippets in this README are current for 3.1.2.
 
 ## Troubleshooting
 
