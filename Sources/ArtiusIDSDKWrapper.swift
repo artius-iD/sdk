@@ -740,8 +740,8 @@ public class ArtiusIDSDKWrapper {
 
 // SDK Information and utilities
 public struct ArtiusIDSDKInfo {
-    public static let version = "3.1.1"
-    public static let wrapperVersion = "3.1.1"
+    public static let version = "3.1.2"
+    public static let wrapperVersion = "3.1.2"
     public static let build = "iOS Universal Binary (Device + Simulator)"
     public static let architecture = "iOS (arm64 + x86_64)"
     public static func printInfo() {
