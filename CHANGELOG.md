@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.4] - 2026-09-25
+
+### Added
+- `verifyEnrolledAccount()` checks with the service that the device's enrolled account still
+  exists and returns `.active`, `.inactive` or `.unreachable`. `.inactive` means the service has
+  no active account for the device, so it is safe to start enrollment again.
+
+### Changed
+- Session binding: a lock caused by the phone being away is reported as such, so a paired browser
+  shows a phone-away notice instead of an inactivity prompt and resumes when the phone returns.
+- Updated certificate pinning for the real-time session connection.
+
+## [3.1.3] - 2026-09-22
+
+### Fixed
+- Corrected the Closed and Terminated session-status values to match the service
+  (Terminated = 5, Closed = 6).
+
+## [3.1.2] - 2026-09-22
+
+### Fixed
+- Enrollment retries send the user to the correct capture step (the front of the document, the
+  back or its barcode, the passport, or the face) instead of a mismatched one.
+- A verification that comes back with a failing document image, a low face match or a failed
+  identity check is reported as a failure rather than a success, and no account is stored for it.
+
 ## [3.1.1] - 2026-09-16
 
 ### Changed
