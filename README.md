@@ -4,7 +4,7 @@ Identity verification, biometric authentication and session binding for iOS apps
 
 | | |
 |---|---|
-| **Latest release** | [3.1.4](https://github.com/artius-iD/sdk/releases/tag/v3.1.4) (September 25, 2026) |
+| **Latest release** | [3.2.0](https://github.com/artius-iD/sdk/releases/tag/v3.2.0) (October 5, 2026) |
 | **Platform** | iOS 18.2 or later (iPhone and iPad) |
 | **Toolchain** | Xcode 26.6 or later. The framework is built with Swift 6.3 in Swift 5 language mode. |
 | **Distribution** | Swift Package Manager |
@@ -19,6 +19,14 @@ Identity verification, biometric authentication and session binding for iOS apps
 - **Organization sign-in.** Enrollment can be tied to your organization's own login, such as Okta or another OIDC provider.
 - **Mutual TLS.** The SDK registers a client certificate for the device and uses it for its service calls.
 - **Branding.** You can set your own colors, fonts, logo, text and language.
+
+## What's new in 3.2.0
+
+- On-device face matching runs on a new engine with separate selfie and ID-portrait models. Thresholds come from configuration (`FaceEngineV2Configuration`), and each result records the threshold and model version it used.
+- **The face-matching models are not included in this release.** Your app supplies them: add a folder named `FaceEngineV2Models` (the two `.mlmodelc` models and `face_engine_v2_models.json`) to your app target as a folder reference. Without them, face matching reports that it is unavailable and everything else works as before. Evaluation partners can request the models from artius.iD.
+- `ArtiusIDSDK.bindingSession` gives a snapshot of the bound session: its status, why each side is locked, pairing, whether the browser is connected, and the expiry warning. `resumeBindingWebSocketIfNeeded()` reconnects a dropped session connection, for example when your app returns to the foreground.
+- The real-time session connection now authenticates with a session token rather than a client certificate, and reconnects once on its own after an unexpected drop. A session the service hard-locks is treated as ended.
+- Stopping presence monitoring while a session is bound now locks the session until monitoring resumes.
 
 ## What's new in 3.1.4
 
@@ -62,7 +70,7 @@ See [CHANGELOG.md](CHANGELOG.md) for details and [Upgrading from 3.0](#upgrading
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/artius-iD/sdk", from: "3.1.4")
+    .package(url: "https://github.com/artius-iD/sdk", from: "3.2.0")
 ],
 targets: [
     .target(
@@ -349,7 +357,7 @@ For full control, `EnhancedSDKThemeConfiguration` also accepts `typography`, `co
 - **iOS 18.2 minimum.** Raise your deployment target to 18.2 or later.
 - **Result types.** `VerificationResult` and `BindingEnrollmentResult` now come from the framework, under the same names. Code that reads results keeps compiling, and every result field is now available.
 - **Certificates.** The first launch after upgrading issues new client certificates for the device and removes the old one. This happens in the background, and users aren't prompted.
-- **Sample code.** `Examples/iOS` was written for the 2.x API. The snippets in this README are current for 3.1.4.
+- **Sample code.** `Examples/iOS` was written for the 2.x API. The snippets in this README are current for 3.2.0.
 
 ## Troubleshooting
 

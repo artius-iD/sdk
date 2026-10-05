@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.2.0] - 2026-10-05
+
+### Changed
+- On-device face matching runs on a new engine with separate selfie and ID-portrait models.
+  Thresholds come from configuration (`FaceEngineV2Configuration`), and every result records the
+  threshold and model version it used.
+- **The face-matching models are not included in this release.** A host app supplies them in its
+  bundle (see the integration guide). Without them, face matching reports that it is unavailable
+  and the rest of the SDK works as before. Evaluation partners can request the models from
+  artius.iD.
+- The real-time session connection authenticates with a session token instead of a client
+  certificate, and reconnects once automatically after an unexpected drop.
+- A session the service hard-locks is treated as ended.
+
+### Added
+- `ArtiusIDSDK.bindingSession`: a snapshot of the bound session (status, why each side is locked,
+  pairing, whether the browser is connected, expiry warning), with update notifications.
+- `ArtiusIDSDK.resumeBindingWebSocketIfNeeded()` reconnects a dropped session connection, for
+  example when the app returns to the foreground.
+- Stopping presence monitoring while a session is bound now locks the session until monitoring
+  resumes.
+
+### Removed
+- The separate client certificate for the real-time session connection.
+
 ## [3.1.4] - 2026-09-25
 
 ### Added
