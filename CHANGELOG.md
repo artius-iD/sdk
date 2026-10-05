@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.2.1] - 2026-10-05
+
+### Fixed
+- Requests no longer stall before sending on a slow DNS resolver. Enrollment could sit on
+  Processing for about a minute before the request left the phone.
+- Request bodies are no longer written to the system log; only their size is.
+
 ## [3.2.0] - 2026-10-05
 
 ### Changed
