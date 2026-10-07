@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.2.3] - 2026-10-07
+
+### Changed
+- `sendBindingResponse` returns the service's answer for every HTTP status: `statusCode` is the
+  HTTP status and `message` the service's own text, so an app can tell a decline the service
+  accepted (401) from one it refused because the scanned code had expired (403). `nil` now means
+  only that no answer arrived. Treat only `statusCode == 200` as accepted.
+
 ## [3.2.2] - 2026-10-07
 
 ### Security
