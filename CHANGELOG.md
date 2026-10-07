@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.2.2] - 2026-10-07
+
+### Security
+- Binding, approval and authentication requests no longer approve without a check when
+  biometrics are unavailable. They use Face ID / Touch ID when available, otherwise the device
+  passcode, and fail when the device has neither. Previously any biometric error (not enrolled,
+  locked out, no hardware) counted as authenticated.
+
+### Fixed
+- SDK strings are found for a bare language code whose strings ship under a region: with the
+  locale set to Spanish (`es`) every SDK string fell back to English.
+
 ## [3.2.1] - 2026-10-05
 
 ### Fixed

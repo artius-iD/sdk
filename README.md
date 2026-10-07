@@ -4,7 +4,7 @@ Identity verification, biometric authentication and session binding for iOS apps
 
 | | |
 |---|---|
-| **Latest release** | [3.2.1](https://github.com/artius-iD/sdk/releases/tag/v3.2.1) (October 5, 2026) |
+| **Latest release** | [3.2.2](https://github.com/artius-iD/sdk/releases/tag/v3.2.2) (October 7, 2026) |
 | **Platform** | iOS 18.2 or later (iPhone and iPad) |
 | **Toolchain** | Xcode 26.6 or later. The framework is built with Swift 6.3 in Swift 5 language mode. |
 | **Distribution** | Swift Package Manager |
@@ -19,6 +19,11 @@ Identity verification, biometric authentication and session binding for iOS apps
 - **Organization sign-in.** Enrollment can be tied to your organization's own login, such as Okta or another OIDC provider.
 - **Mutual TLS.** The SDK registers a client certificate for the device and uses it for its service calls.
 - **Branding.** You can set your own colors, fonts, logo, text and language.
+
+## What's new in 3.2.2
+
+- **Binding, approval and authentication need the device owner.** They use Face ID / Touch ID when available, otherwise the device passcode, and fail when the device has neither. Previously a biometric error (not enrolled, locked out, no hardware) counted as authenticated.
+- SDK strings are found for a bare language code whose strings ship under a region: with the language set to Spanish (`es`), SDK screens were in English.
 
 ## What's new in 3.2.1
 
@@ -75,7 +80,7 @@ See [CHANGELOG.md](CHANGELOG.md) for details and [Upgrading from 3.0](#upgrading
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/artius-iD/sdk", from: "3.2.1")
+    .package(url: "https://github.com/artius-iD/sdk", from: "3.2.2")
 ],
 targets: [
     .target(
