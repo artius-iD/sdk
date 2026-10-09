@@ -4,7 +4,7 @@ Identity verification, biometric authentication and session binding for iOS apps
 
 | | |
 |---|---|
-| **Latest release** | [3.2.3](https://github.com/artius-iD/sdk/releases/tag/v3.2.3) (October 7, 2026) |
+| **Latest release** | [3.2.4](https://github.com/artius-iD/sdk/releases/tag/v3.2.4) (October 8, 2026) |
 | **Platform** | iOS 18.2 or later (iPhone and iPad) |
 | **Toolchain** | Xcode 26.6 or later. The framework is built with Swift 6.3 in Swift 5 language mode. |
 | **Distribution** | Swift Package Manager |
@@ -19,6 +19,11 @@ Identity verification, biometric authentication and session binding for iOS apps
 - **Organization sign-in.** Enrollment can be tied to your organization's own login, such as Okta or another OIDC provider.
 - **Mutual TLS.** The SDK registers a client certificate for the device and uses it for its service calls.
 - **Branding.** You can set your own colors, fonts, logo, text and language.
+
+## What's new in 3.2.4
+
+- **Test approvals work in Sandbox and Production.** `sendApprovalRequest()` sends the approval to the enrolled account and waits for the phone's answer, so the result reports it ("Approval answered: Approved"). The device must be enrolled first. Development, QA and Staging are unchanged.
+- **Requests in progress are no longer cancelled.** When the SDK refreshed its secure connection, any request still running was cancelled. Answering an approval while the request for it was open, for example, made that request fail although the approval went through.
 
 ## What's new in 3.2.3
 
@@ -84,7 +89,7 @@ See [CHANGELOG.md](CHANGELOG.md) for details and [Upgrading from 3.0](#upgrading
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/artius-iD/sdk", from: "3.2.3")
+    .package(url: "https://github.com/artius-iD/sdk", from: "3.2.4")
 ],
 targets: [
     .target(

@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.2.4] - 2026-10-08
+
+### Fixed
+- Test approvals in Sandbox and Production: `sendApprovalRequest()` sends the approval to the
+  enrolled account and waits for the phone's answer, so `ApprovalRequestResult.message` reports it
+  ("Approval answered: Approved"). The device must be enrolled. Development, QA and Staging are
+  unchanged.
+- Refreshing the SDK's secure connection no longer cancels requests that are still in progress.
+
 ## [3.2.3] - 2026-10-07
 
 ### Changed
